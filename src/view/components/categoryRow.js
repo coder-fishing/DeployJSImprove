@@ -16,7 +16,7 @@ const CategoryRow = ({ category }) => {
                       </figure>    
                       <div class="product-table__container--decs">
                           <p class="product-table__container--decs--name" title="${category.name}">${formatters.formatName(category.name)}</p>
-                          <p class="product-table__container--decs--variants">${category.description || ''}</p>
+                          <p class="product-table__container--decs--variants">${formatters.formatDescription(category.description )|| ''}</p>
                       </div>  
                   </div> 
             </div>     

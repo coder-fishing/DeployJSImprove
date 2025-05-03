@@ -12,6 +12,12 @@ export const formatters = {
         return sku.length > 10 ? sku.substring(0, 10) + '...' : sku;
     },
 
+    // Format mô tả sản phẩm
+    formatDescription: (description) => {
+        if (!description) return 'undefined';
+        return description.length > 100 ? description.substring(0, 100) + '...' : description;
+    },
+
     // Format giá
     formatPrice: (price) => {
         if (!price || isNaN(price)) return 'undefined';
