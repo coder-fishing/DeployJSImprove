@@ -75,7 +75,8 @@ export class editProduct {
                     skuInput: document.querySelector('input[name="sku"]'),
                     priceInput: document.querySelector('input[name="basePrice"]'),
                     descriptionInput: document.querySelector('textarea[name="description"]'),
-                    quantityInput: document.querySelector('input[name="quantity"]')
+                    quantityInput: document.querySelector('input[name="quantity"]'),
+                    barcodeInput: document.querySelector('input[name="barcode"]'),
                 };
 
                 const productData = this.controller.getProductFormData(formElements);
