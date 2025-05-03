@@ -4,6 +4,8 @@ import axios from "axios";
 import { setupPaginationEvents } from "../../utils/setupPaginationEvents.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
+import { API_URL } from '../../config/apiurl.config.js';
+
 
 class CategoryListView {
     constructor() {
@@ -11,7 +13,7 @@ class CategoryListView {
         this.itemsPerPage = 8;
         this.currentPage = 1;
         this.searchQuery = '';
-        this.API_URL = 'https://67c09c48b9d02a9f224a690e.mockapi.io/api';
+        this.API_URL = API_URL;
         this.selectedCategories = new Set();
         this.render();
         this.init();
@@ -24,7 +26,6 @@ class CategoryListView {
             this.categories = response.data;
             this.maxPage = Math.ceil(this.categories.length / this.itemsPerPage);
             this.render();
-            createToast('Categories loaded successfully', 'success');
         } catch (error) {
             console.error('Error fetching categories:', error);
             createToast('Failed to load categories', 'error');

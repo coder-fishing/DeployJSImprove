@@ -26,7 +26,6 @@ export class addProduct {
                     ${category.name}</div>
                 `).join('');
             }
-            createToast('Categories loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading categories:', error);
             createToast('Failed to load categories', 'error');
@@ -150,7 +149,6 @@ export class addProduct {
 
             this.controller.setupImageHandling(imageElements);
             this.handleAddProduct();
-            createToast('Form loaded successfully', 'success');
         } catch (error) {
             console.error("Error in render:", error);
             document.querySelector(".content").innerHTML = "<p>Error loading form</p>";

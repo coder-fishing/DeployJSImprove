@@ -136,7 +136,6 @@ export default class editCategory {
             `;
             
             document.querySelector(".content").innerHTML = content;
-            createToast('Category loaded successfully', 'success');
         } catch (error) {
             console.error("Error in render:", error);
             document.querySelector(".content").innerHTML = "<p>Error loading category</p>";

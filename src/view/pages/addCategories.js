@@ -119,7 +119,6 @@ class addCategories {
                 </div>
             `;
             document.querySelector(".content").innerHTML = content;
-            createToast('Form loaded successfully', 'success');
         } catch (error) {
             console.error('Error rendering form:', error);
             createToast('Failed to load form', 'error');

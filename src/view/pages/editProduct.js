@@ -35,7 +35,6 @@ export class editProduct {
                     }
                 }
             }
-            createToast('Categories loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading categories:', error);
             createToast('Failed to load categories', 'error');
@@ -172,7 +171,6 @@ export class editProduct {
 
             this.controller.setupImageHandling(imageElements);
             this.handleEditProduct(this.currentProduct);
-            createToast('Product loaded successfully', 'success');
         } catch (error) {
             console.error("Error in render:", error);
             document.querySelector(".content").innerHTML = `
