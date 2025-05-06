@@ -4,19 +4,27 @@ import axios from "axios";
 import { setupPaginationEvents } from "../../utils/setupPaginationEvents.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
+import { showConfirmDialog } from '../components/confirmDialog.js';
 import { API_URL } from '../../config/apiurl.config.js';
+import { navigate } from "../../utils/navigation";
+import BaseView from "../BaseView";
 
-
-class CategoryListView {
+class CategoryListView extends BaseView {
     constructor() {
+        super();
         this.categories = [];
         this.itemsPerPage = 8;
         this.currentPage = 1;
         this.searchQuery = '';
         this.API_URL = API_URL;
         this.selectedCategories = new Set();
-        this.render();
+        
         this.init();
+    }
+
+    async init() {
+        await this.fetchCategories();
+        this.setupEventListeners();
     }
 
     async fetchCategories() {
@@ -34,15 +42,72 @@ class CategoryListView {
         }
     }
 
-    async init() {
-        await this.fetchCategories();
-        this.setupDeleteHandlers();
-        this.setupBulkActions();
+    handleGlobalClick = async (e) => {
+        // Only handle clicks if we're on the category list page
+        if (!document.querySelector('.product-list')) return;
+
+        // Add button handler
+        const addButton = e.target.closest('.product-title__buttons--add');
+        if (addButton && addButton.closest('.product-list')) {
+            navigate('/addcategory');
+            return;
+        }
+
+        // Edit button handler
+        const editButton = e.target.closest('.product-table__edit');
+        if (editButton) {
+            const categoryId = editButton.getAttribute('data-id');
+            if (categoryId) {
+                navigate(`/editcategory/${categoryId}`);
+            }
+            return;
+        }
+
+        // Delete button handler
+        const deleteButton = e.target.closest('.product-table__delete');
+        if (deleteButton) {
+            const categoryId = deleteButton.getAttribute('data-id');
+            
+            if (this.selectedCategories.size > 0) {
+                this.handleBulkDelete();
+            } else if (categoryId) {
+                showConfirmDialog({
+                    title: 'Delete Category',
+                    message: 'Are you sure you want to delete this category?',
+                    onConfirm: async () => {
+                        try {
+                            showLoading();
+                            await axios.delete(`${this.API_URL}/cate/${categoryId}`);
+                            
+                            // Update data first
+                            this.categories = this.categories.filter(c => c.categoryID !== categoryId);
+                            
+                            // Then update UI in a controlled manner
+                            requestAnimationFrame(() => {
+                                this.renderTableOnly();
+                                createToast('Category deleted successfully', 'success');
+                            });
+                        } catch (error) {
+                            console.error('Error deleting category:', error);
+                            createToast('Failed to delete category', 'error');
+                        } finally {
+                            hideLoading();
+                        }
+                    }
+                });
+            }
+            return;
+        }
+    }
+
+    setupEventListeners() {
+        this.addGlobalEventListener('click', this.handleGlobalClick);
         this.setupNavigationEvents();
+        this.setupBulkActions();
     }
 
     setupNavigationEvents() {
-        document.addEventListener('click', (e) => {
+        this.addGlobalEventListener('click', (e) => {
             const prevBtn = e.target.closest('#prevbtn');
             const nextBtn = e.target.closest('#nextbtn');
     
@@ -60,10 +125,10 @@ class CategoryListView {
                 }
             }
         });
-      }
+    }
 
     setupBulkActions() {
-        document.addEventListener('click', (e) => {
+        this.addGlobalEventListener('click', (e) => {
             const headerCheckbox = e.target.closest('.product-table-header__imageleft--first');
             if (headerCheckbox) {
                 const allCheckboxes = document.querySelectorAll('.product-table__name__checkbox--check');
@@ -92,50 +157,32 @@ class CategoryListView {
     async handleBulkDelete() {
         if (this.selectedCategories.size === 0) return;
 
-        if (confirm(`Are you sure you want to delete ${this.selectedCategories.size} selected categories?`)) {
-            try {
-                showLoading();
-                const deletePromises = Array.from(this.selectedCategories).map(id => 
-                    axios.delete(`${this.API_URL}/cate/${id}`)
-                );
-                await Promise.all(deletePromises);
-                this.categories = this.categories.filter(c => !this.selectedCategories.has(c.categoryID));
-                this.selectedCategories.clear();
-                this.renderTableOnly();
-                createToast('Selected categories deleted successfully', 'success');
-            } catch (error) {
-                console.error('Error deleting categories:', error);
-                createToast('Failed to delete some categories', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-    }
-
-    setupDeleteHandlers() {
-        document.addEventListener('click', async (e) => {
-            const deleteButton = e.target.closest('.product-table__delete');
-            if (deleteButton) {
-                const row = deleteButton.closest('tr');
-                const categoryId = row.getAttribute('data-id');
-                
-                if (this.selectedCategories.size > 0) {
-                    this.handleBulkDelete();
-                } else if (categoryId) {
-                    if (confirm('Are you sure you want to delete this category?')) {
-                        try {
-                            showLoading();
-                            await axios.delete(`${this.API_URL}/cate/${categoryId}`);
-                            this.categories = this.categories.filter(c => c.categoryID !== categoryId);
-                            this.renderTableOnly();
-                            createToast('Category deleted successfully', 'success');
-                        } catch (error) {
-                            console.error('Error deleting category:', error);
-                            createToast('Failed to delete category', 'error');
-                        } finally {
-                            hideLoading();
-                        }
-                    }
+        showConfirmDialog({
+            title: 'Delete Categories',
+            message: `Are you sure you want to delete ${this.selectedCategories.size} selected categories?`,
+            onConfirm: async () => {
+                try {
+                    showLoading();
+                    const deletePromises = Array.from(this.selectedCategories).map(id => 
+                        axios.delete(`${this.API_URL}/cate/${id}`)
+                    );
+                    
+                    await Promise.all(deletePromises);
+                    
+                    // Update data first
+                    this.categories = this.categories.filter(c => !this.selectedCategories.has(c.categoryID));
+                    this.selectedCategories.clear();
+                    
+                    // Then update UI in a controlled manner
+                    requestAnimationFrame(() => {
+                        this.renderTableOnly();
+                        createToast('Selected categories deleted successfully', 'success');
+                    });
+                } catch (error) {
+                    console.error('Error deleting categories:', error);
+                    createToast('Failed to delete some categories', 'error');
+                } finally {
+                    hideLoading();
                 }
             }
         });
@@ -210,17 +257,53 @@ class CategoryListView {
     renderTableOnly() {
         const paginatedCategories = this.getPaginatedCategories();
         const tableBody = document.querySelector('.product-table tbody');
+        
         if (tableBody) {
-            tableBody.innerHTML = paginatedCategories.map(category => CategoryRow({ category })).join('');
-            this.clickTable();
+            // Create temporary container and build new content
+            const tempContainer = document.createElement('tbody');
+            tempContainer.innerHTML = paginatedCategories.map(category => CategoryRow({ category })).join('');
+            
+            // Update DOM in a single operation
+            requestAnimationFrame(() => {
+                // Replace old tbody with new one
+                tableBody.parentNode.replaceChild(tempContainer, tableBody);
+                
+                // Update pagination and reinitialize click handlers
+                this.renderPagination();
+                this.clickTable();
+                
+                // Update showing count
+                const showingElement = document.querySelector('.pagination__showing');
+                if (showingElement) {
+                    const totalItems = this.categories.length;
+                    const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+                    const end = Math.min(this.currentPage * this.itemsPerPage, totalItems);
+                    showingElement.textContent = `Showing ${start}-${end} from ${totalItems}`;
+                }
+            });
         }
-        this.renderPagination();
-      }
+    }
 
     render() {
         const paginatedCategories = this.getPaginatedCategories();
 
-        const content = `
+        // Cache DOM queries
+        const content = document.querySelector("#content");
+        if (!content) return;
+
+        content.innerHTML = this.getTemplate(paginatedCategories);
+        
+        // Batch DOM operations
+        requestAnimationFrame(() => {
+            this.renderPagination();
+            setupPaginationEvents();
+            this.clickTable();
+            this.clickTagItem();
+        });
+    }
+
+    getTemplate(paginatedCategories) {
+        return `
             <div class="product-list">
                 <div class="product-title">
                     <div class="product-title-left">
@@ -239,12 +322,10 @@ class CategoryListView {
                             <img src="${download}" alt="icon" class="button__icon" />
                             <span class="button__text">Export</span>
                         </button>
-                        <a href="addcategory">
-                            <button class="product-title__buttons--add">
-                                <img src="${add}" alt="icon" class="button__icon" />
-                                <span class="button__text">Add Category</span>
-                            </button>
-                        </a>
+                        <button class="product-title__buttons--add">
+                            <img src="${add}" alt="icon" class="button__icon" />
+                            <span class="button__text">Add Category</span>
+                        </button>
                     </div>
                 </div>
 
@@ -309,12 +390,6 @@ class CategoryListView {
                 </div>
             </div>
         `;
-
-        document.querySelector("#content").innerHTML = content;
-        this.renderPagination();
-        setupPaginationEvents();
-        this.clickTable();
-        this.clickTagItem();
     }
 }
 

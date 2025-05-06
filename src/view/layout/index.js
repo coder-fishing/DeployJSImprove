@@ -1,7 +1,8 @@
-import navigation from './navigation';
+import navigation, { setupNavigation } from './navigation';
 import header from './../components/header';
-const  Layout = () => {
-    return ( `
+
+const Layout = () => {
+    const template = `
         <div class="container">
             ${navigation()}
             <div class="main-right"> 
@@ -9,6 +10,14 @@ const  Layout = () => {
                 <div class="content" id="content"></div>
             </div>
         </div>
-    ` );
-    }
+    `;
+
+    // Setup navigation after rendering
+    setTimeout(() => {
+        setupNavigation();
+    }, 0);
+
+    return template;
+};
+
 export default Layout;

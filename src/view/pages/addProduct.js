@@ -4,6 +4,7 @@ import { dropdown } from '../../utils/dropdown.js';
 import ProductController from "../../controller/ProductController.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
+import { navigate } from "../../utils/navigation";
 
 
 export class addProduct {
@@ -55,6 +56,8 @@ export class addProduct {
                     .map(input => input.files[0])
                     .filter(file => file);
 
+                const imageUrls = await this.controller.processProductImages(images, imageFiles);
+
                 const formElements = {
                     images,
                     dropdownButton: document.getElementById("dropdownButtonTop"),
@@ -68,22 +71,19 @@ export class addProduct {
                 };
 
                 const productData = this.controller.getProductFormData(formElements);
+                productData.ImageSrc = imageUrls;
 
-                const validation = this.controller.validateProductData(productData, formElements);
+                const validation = this.controller.validateProductData(productData);
                 if (!validation.isValid) {
                     hideLoading(); // Hide loading when validation fails
                     createToast(Object.values(validation.errors)[0], 'error');
                     return;
                 }
 
-                // Process images only after validation passes
-                const imageUrls = await this.controller.processProductImages(images, imageFiles);
-                productData.ImageSrc = imageUrls;
-
                 this.controller.setButtonLoading(saveBtn, true, 'Add Product');
                 await this.controller.saveProduct(productData);
                 createToast('Product added successfully', 'success');
-                this.controller.redirect("/");
+                navigate("/");
             } catch (error) {
                 console.error("Error adding product:", error);
                 createToast('Failed to add product', 'error');
@@ -94,7 +94,7 @@ export class addProduct {
         });
 
         cancelBtn.addEventListener("click", () => {
-            this.controller.redirect("/");
+            navigate("/");
         });
     };
 
