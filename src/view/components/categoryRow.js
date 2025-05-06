@@ -1,8 +1,9 @@
 import { eye, trash, pencil, checkbox, checkicon, noAvt } from "../../assets/icon/index.js";
 import { formatters } from "../../utils/formatters.js";
+import { navigate } from "../../utils/navigation";
 
 const CategoryRow = ({ category }) => {
-  return (`
+    return (`
       <tr class="product-table__row" data-id="${category.categoryID}">
           <td class="product-table__item"> 
             <div class="product-table__name">
@@ -16,7 +17,7 @@ const CategoryRow = ({ category }) => {
                       </figure>    
                       <div class="product-table__container--decs">
                           <p class="product-table__container--decs--name" title="${category.name}">${formatters.formatName(category.name)}</p>
-                          <p class="product-table__container--decs--variants">${category.description || ''}</p>
+                          <p class="product-table__container--decs--variants">${formatters.formatDescription(category.description) || ''}</p>
                       </div>  
                   </div> 
             </div>     
@@ -33,11 +34,9 @@ const CategoryRow = ({ category }) => {
           </td>
           <td class="product-table__item">
               <div class="product-table__item--buttons">
-                  <a href="/editcategory/${category.categoryID}">
-                        <span class="product-table__edit">
-                             <img src="${pencil}" alt="pencil"/> 
-                        </span>
-                  </a>
+                  <span class="product-table__edit" onclick="navigate('/editcategory/' + '${category.categoryID}')" data-id="${category.categoryID}">
+                       <img src="${pencil}" alt="pencil"/> 
+                  </span>
                   <span class="product-table__view">
                         <img src="${eye}" alt="eye"/>
                   </span>
@@ -49,5 +48,8 @@ const CategoryRow = ({ category }) => {
       </tr>
   `);
 };
+
+// Add navigate to window for inline event handlers
+window.navigate = navigate;
 
 export default CategoryRow;

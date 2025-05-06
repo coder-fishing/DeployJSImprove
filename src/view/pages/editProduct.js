@@ -4,6 +4,7 @@ import { dropdown } from '../../utils/dropdown.js';
 import ProductController from "../../controller/ProductController.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
+import { navigate } from "../../utils/navigation";
 
 export class editProduct {
     constructor() {
@@ -35,76 +36,90 @@ export class editProduct {
                     }
                 }
             }
-            createToast('Categories loaded successfully', 'success');
         } catch (error) {
             console.error('Error loading categories:', error);
             createToast('Failed to load categories', 'error');
         }
     }
 
-    handleEditProduct = (product) => {
-        const saveBtn = document.querySelector("#addProduct");
-        const cancelBtn = document.querySelector(".product-title__buttons--cancel");
+    async handleEditProduct() {
+        const nameInput = document.querySelector('input[name="productName"]');
+        const descriptionInput = document.querySelector('textarea[name="description"]');
+        const priceInput = document.querySelector('input[name="price"]');
+        const stockInput = document.querySelector('input[name="stock"]');
+        const imageInput = document.getElementById('imageInput');
+        const categoryDropdown = document.getElementById('dropdownButtonTop');
+        const submitButton = document.querySelector('.product-title__buttons--add');
 
-        // Set initial status
-        const statusText = document.getElementById('status-text');
-        const dropdownButton = document.getElementById('dropdownButton');
-        if (statusText && dropdownButton) {
-            const status = product.status || 'Draft';
-            statusText.textContent = status;
-            dropdownButton.textContent = status;
-            const statusClass = status.toLowerCase().replace(/\s+/g, '-');
-            statusText.className = `form-section__title-status--label-text ${statusClass}`;
+        if (!nameInput || !descriptionInput || !priceInput || !stockInput || !categoryDropdown) {
+            console.error('One or more form elements not found');
+            createToast('Form elements not found', 'error');
+            return;
         }
 
-        saveBtn.addEventListener("click", async () => {
-            try {
-                showLoading();
+        const formData = {
+            name: nameInput.value.trim(),
+            description: descriptionInput.value.trim(),
+            price: parseFloat(priceInput.value),
+            stock: parseInt(stockInput.value),
+            categoryId: categoryDropdown.getAttribute('data-selected-id'),
+            imageUrl: imageInput.files[0],
+            mode: 'edit'
+        };
 
-                const images = Array.from(document.querySelectorAll(".preview-img"));
-                const imageFiles = Array.from(document.querySelectorAll('input[type="file"]'))
-                    .map(input => input.files[0])
-                    .filter(file => file);
+        const validation = this.controller.validateFormData(formData);
+        if (!validation.isValid) {
+            createToast(Object.values(validation.errors)[0], 'error');
+            return;
+        }
 
-                const imageUrls = await this.controller.processProductImages(images, imageFiles);
+        // Check if data has changed
+        const hasNameChanged = formData.name !== this.currentProduct.name;
+        const hasDescriptionChanged = formData.description !== this.currentProduct.description;
+        const hasPriceChanged = formData.price !== this.currentProduct.price;
+        const hasStockChanged = formData.stock !== this.currentProduct.stock;
+        const hasCategoryChanged = formData.categoryId !== this.currentProduct.category_ID;
+        const hasImageChanged = formData.imageUrl != null;
 
-                const formElements = {
-                    images,
-                    dropdownButton: document.getElementById("dropdownButtonTop"),
-                    statusText: document.getElementById('status-text'),
-                    nameInput: document.querySelector('input[name="productName"]'),
-                    skuInput: document.querySelector('input[name="sku"]'),
-                    priceInput: document.querySelector('input[name="basePrice"]'),
-                    descriptionInput: document.querySelector('textarea[name="description"]'),
-                    quantityInput: document.querySelector('input[name="quantity"]')
-                };
+        if (!hasNameChanged && !hasDescriptionChanged && !hasPriceChanged && 
+            !hasStockChanged && !hasCategoryChanged && !hasImageChanged) {
+            window.location.href = "/";
+            return;
+        }
 
-                const productData = this.controller.getProductFormData(formElements);
-                productData.ImageSrc = imageUrls;
+        try {
+            showLoading();
+            this.controller.setButtonLoading(submitButton, true, 'Save Product');
 
-                const validation = this.controller.validateProductData(productData);
-                if (!validation.isValid) {
-                    createToast(Object.values(validation.errors)[0], 'error');
-                    return;
-                }
-
-                this.controller.setButtonLoading(saveBtn, true, 'Save product');
-                await this.controller.updateProduct(this.productId, productData);
-                createToast('Product updated successfully', 'success');
-                this.controller.redirect("/");
-            } catch (error) {
-                console.error("Error updating product:", error);
-                createToast('Failed to update product', 'error');
-            } finally {
-                hideLoading();
-                this.controller.setButtonLoading(saveBtn, false, 'Save product');
+            let imageUrl = this.currentProduct.image; // Keep existing image by default
+            
+            // Only upload new image if a file was selected
+            if (formData.imageUrl) {
+                imageUrl = await this.controller.handleImageUpload(formData.imageUrl);
             }
-        });
 
-        cancelBtn.addEventListener("click", () => {
-            this.controller.redirect("/");
-        });
-    };
+            const productData = new Product(
+                formData.name,
+                formData.description,
+                formData.price,
+                formData.stock,
+                formData.categoryId,
+                imageUrl
+            );
+
+            await this.controller.updateProduct(this.productId, productData);
+            createToast('Product updated successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 500);
+        } catch (error) {
+            console.error('Error:', error);
+            createToast('Failed to update product', 'error');
+        } finally {
+            hideLoading();
+            this.controller.setButtonLoading(submitButton, false, 'Save Product');
+        }
+    }
 
     render = async () => {
         try {
@@ -171,8 +186,7 @@ export class editProduct {
             };
 
             this.controller.setupImageHandling(imageElements);
-            this.handleEditProduct(this.currentProduct);
-            createToast('Product loaded successfully', 'success');
+            this.handleEditProduct();
         } catch (error) {
             console.error("Error in render:", error);
             document.querySelector(".content").innerHTML = `

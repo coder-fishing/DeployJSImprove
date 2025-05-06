@@ -6,13 +6,11 @@ import CategoryController from "../../controller/CategoryController";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
 
-
 class addCategories {  
     constructor() {
         this.controller = new CategoryController();
         this.render();
         this.setupImageHandling();
-        this.initializeAddCategory();
     }
 
     setupImageHandling() {
@@ -21,14 +19,14 @@ class addCategories {
             previewState: document.getElementById('previewState'),
             imageInput: document.getElementById('imageInput'),
             previewImage: document.getElementById('previewImage'),
-            uploadArea: document.querySelector('.upload-area')
+            uploadArea: document.querySelector('.thumbnail__upload-area')
         };
 
         this.controller.setupImageHandling(elements);
     }
 
-    initializeAddCategory() {
-        const saveBtn = document.querySelector("#addCategory");
+    setupEventListeners() {
+        const saveBtn = document.querySelector(".product-title__buttons--add");
         const cancelBtn = document.querySelector(".product-title__buttons--cancel");
 
         if (saveBtn) {
@@ -40,7 +38,7 @@ class addCategories {
 
         if (cancelBtn) {
             cancelBtn.addEventListener("click", () => {
-                this.controller.redirect("/category");
+                window.location.href = "/category";
             });
         }
     }
@@ -49,7 +47,7 @@ class addCategories {
         const nameInput = document.querySelector('input[name="categoryName"]');
         const descriptionInput = document.querySelector('textarea[name="description"]');
         const imageInput = document.getElementById('imageInput');
-        const submitButton = document.getElementById('addCategory');
+        const submitButton = document.querySelector('.product-title__buttons--add');
     
         if (!nameInput || !descriptionInput || !imageInput) {
             console.error('One or more form elements not found');
@@ -78,7 +76,9 @@ class addCategories {
             await this.controller.saveCategory(categoryData);
             
             createToast('Category added successfully!', 'success');
-            this.controller.redirect('/category');
+            setTimeout(() => {
+                window.location.href = "/category";
+            }, 500);
         } catch (error) {
             console.error('Error:', error);
             createToast('Failed to add category', 'error');
@@ -109,7 +109,7 @@ class addCategories {
                                 <figure class="button__icon"><img src="${cross}" alt="icon"/></figure>
                                 <span class="button__text">Cancel</span>
                             </button>
-                            <button class="product-title__buttons--add" id="addCategory">
+                            <button class="product-title__buttons--add">
                                 <figure class="button__icon"><img src="${save}" alt="icon" /></figure>
                                 <span class="button__text">Add Category</span>
                             </button>
@@ -119,7 +119,7 @@ class addCategories {
                 </div>
             `;
             document.querySelector(".content").innerHTML = content;
-            createToast('Form loaded successfully', 'success');
+            this.setupEventListeners();
         } catch (error) {
             console.error('Error rendering form:', error);
             createToast('Failed to load form', 'error');

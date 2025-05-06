@@ -6,6 +6,9 @@ import { setupPaginationEvents } from "../../utils/setupPaginationEvents.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
 import { createToast } from "../../utils/toast.js";
 import { showConfirmDialog } from '../components/confirmDialog.js';
+import { API_URL } from '../../config/apiurl.config.js';
+import { navigate } from "../../utils/navigation";
+
 
 class ProductListView {
 
@@ -17,8 +20,9 @@ class ProductListView {
       this.currentFilter = 'all';
       this.searchQuery = '';
       this.searchTimeout = null; // For debouncing
-      this.API_URL = 'https://67c09c48b9d02a9f224a690e.mockapi.io/api';
+      this.API_URL = API_URL;
       this.selectedProducts = new Set();
+      this.eventListenersInitialized = false;
   
       this.init();
     }
@@ -30,7 +34,6 @@ class ProductListView {
       this.products = response.data;
       this.maxPage = Math.ceil(this.products.length / this.itemsPerPage); 
       this.render();
-      createToast('Products loaded successfully', 'success');
     } catch (error) {
       console.error("Error fetching products:", error);
       createToast('Failed to load products', 'error');
@@ -41,10 +44,84 @@ class ProductListView {
 
   async init() {
     await this.fetchProducts();
-    this.setupSearchEvent();
-    this.setupDeleteHandlers();
-    this.setupBulkActions();
-    this.setupNavigationEvents();
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    // Prevent multiple event listener registration
+    if (this.eventListenersInitialized) return;
+    this.eventListenersInitialized = true;
+
+    // Global click handler
+    document.addEventListener('click', (e) => {
+      // Add button click handler
+      const addButton = e.target.closest('.product-title__buttons--add');
+      if (addButton) {
+        navigate('/addproduct');
+      }
+
+      // Edit button handler
+      const editButton = e.target.closest('.product-table__edit');
+      if (editButton) {
+        const productId = editButton.getAttribute('data-id');
+        if (productId) {
+          navigate(`/editproduct/${productId}`);
+        }
+      }
+
+      // Delete button handler
+      const deleteButton = e.target.closest('.product-table__delete');
+      if (deleteButton) {
+        const productId = deleteButton.getAttribute('data-id');
+        
+        if (this.selectedProducts.size > 0) {
+          this.handleBulkDelete();
+        } else if (productId) {
+          showConfirmDialog({
+            title: 'Delete Product',
+            message: 'Are you sure you want to delete this product?',
+            onConfirm: async () => {
+              try {
+                showLoading();
+                await axios.delete(`${this.API_URL}/product/${productId}`);
+                
+                // Update data first
+                this.products = this.products.filter(p => p.id !== productId);
+                
+                // Then update UI in a controlled manner
+                requestAnimationFrame(() => {
+                  this.renderTableOnly();
+                  createToast('Product deleted successfully', 'success');
+                });
+              } catch (error) {
+                console.error('Error deleting product:', error);
+                createToast('Failed to delete product', 'error');
+              } finally {
+                hideLoading();
+              }
+            }
+          });
+        }
+      }
+    });
+
+    // Setup search with debouncing
+    const searchInput = document.querySelector('.search-bar_input');
+    if (searchInput) {
+      searchInput.addEventListener('input', this.debounceSearch.bind(this));
+    }
+  }
+
+  debounceSearch(e) {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    this.searchTimeout = setTimeout(() => {
+      this.searchQuery = e.target.value;
+      this.currentPage = 1;
+      this.renderTableOnly();
+    }, 300);
   }
 
   setupNavigationEvents() {
@@ -107,49 +184,23 @@ class ProductListView {
           const deletePromises = Array.from(this.selectedProducts).map(id => 
             axios.delete(`${this.API_URL}/product/${id}`)
           );
+          
           await Promise.all(deletePromises);
+          
+          // Update data first
           this.products = this.products.filter(p => !this.selectedProducts.has(p.id));
           this.selectedProducts.clear();
-          this.renderTableOnly();
-          createToast('Selected products deleted successfully', 'success');
+          
+          // Then update UI in a controlled manner
+          requestAnimationFrame(() => {
+            this.renderTableOnly();
+            createToast('Selected products deleted successfully', 'success');
+          });
         } catch (error) {
           console.error('Error deleting products:', error);
           createToast('Failed to delete some products', 'error');
         } finally {
           hideLoading();
-        }
-      }
-    });
-  }
-
-  setupDeleteHandlers() {
-    document.addEventListener('click', async (e) => {
-      const deleteButton = e.target.closest('.product-table__delete');
-      if (deleteButton) {
-        const row = deleteButton.closest('tr');
-        const productId = row.getAttribute('data-id');
-        
-        if (this.selectedProducts.size > 0) {
-          this.handleBulkDelete();
-        } else if (productId) {
-          showConfirmDialog({
-            title: 'Delete Product',
-            message: 'Are you sure you want to delete this product?',
-            onConfirm: async () => {
-              try {
-                showLoading();
-                await axios.delete(`${this.API_URL}/product/${productId}`);
-                this.products = this.products.filter(p => p.id !== productId);
-                this.renderTableOnly();
-                createToast('Product deleted successfully', 'success');
-              } catch (error) {
-                console.error('Error deleting product:', error);
-                createToast('Failed to delete product', 'error');
-              } finally {
-                hideLoading();
-              }
-            }
-          });
         }
       }
     });
@@ -274,7 +325,23 @@ class ProductListView {
     this.maxPage = Math.ceil(filteredProducts.length / this.itemsPerPage) || 1;
     const paginatedProducts = this.getPaginatedProducts();
 
-    const bin = `
+    // Cache DOM queries
+    const content = document.querySelector("#content");
+    if (!content) return;
+
+    content.innerHTML = this.getTemplate(paginatedProducts, filteredProducts);
+    
+    // Batch DOM operations
+    requestAnimationFrame(() => {
+      this.renderPagination();
+      setupPaginationEvents();
+      this.clickTable();
+      this.clickTagItem();
+    });
+  }
+
+  getTemplate(paginatedProducts, filteredProducts) {
+    return `
       <div class="product-list">
         <div class="product-title">
           <div class="product-title-left">
@@ -292,12 +359,10 @@ class ProductListView {
               <img src="${download}" alt="icon" class="button__icon" />
               <span class="button__text">Export</span>
             </button>
-            <a href="addproduct">
-              <button class="product-title__buttons--add">
-                <img src="${add}" alt="icon" class="button__icon" />
-                <span class="button__text">Add product</span>
-              </button>
-            </a>
+            <button class="product-title__buttons--add">
+              <img src="${add}" alt="icon" class="button__icon" />
+              <span class="button__text">Add product</span>
+            </button>
           </div>
         </div>
  
@@ -399,72 +464,43 @@ class ProductListView {
         </div>
       </div>
     `;
-
-    document.querySelector("#content").innerHTML = bin;
-    this.renderPagination(); 
-    setupPaginationEvents();
-    this.clickTable();
-    this.clickTagItem();
-
-  }
-
-  setupSearchEvent() {
-    const searchInputs = document.querySelectorAll('.search-bar_input');
-    console.log(searchInputs);
-  
-    if (searchInputs.length === 2) {
-      const [searchInput1, searchInput2] = searchInputs;
-      
-      searchInput1.addEventListener('input', (e) => {
-        searchInput2.value = e.target.value;
-        
-        if (this.searchTimeout) {
-          clearTimeout(this.searchTimeout);
-        }
-  
-        this.searchTimeout = setTimeout(() => {
-          this.searchQuery = e.target.value;
-          this.currentPage = 1;
-          this.renderTableOnly();
-          console.log(this.searchQuery);
-        }, 300);
-      });
-      
-      // Second search input
-      searchInput2.addEventListener('input', (e) => {
-        // Update the first input to match the second
-        searchInput1.value = e.target.value;
-        
-        if (this.searchTimeout) {
-          clearTimeout(this.searchTimeout);
-        }
-  
-        this.searchTimeout = setTimeout(() => {
-          this.searchQuery = e.target.value;
-          this.currentPage = 1;
-          this.renderTableOnly();
-          console.log(this.searchQuery);
-        }, 300);
-      });
-    }
   }
 
   renderTableOnly() {
     const filteredProducts = this.filterProducts(this.products);
     this.maxPage = Math.ceil(filteredProducts.length / this.itemsPerPage) || 1;
     
-    // Ensure current page is valid
     if (this.currentPage > this.maxPage) {
       this.currentPage = this.maxPage;
     }
     
     const paginatedProducts = this.getPaginatedProducts();
     const tableBody = document.querySelector('.product-table tbody');
+    
     if (tableBody) {
-      tableBody.innerHTML = paginatedProducts.map(product => ProductRow({ product })).join('');
-      this.clickTable();
+      // Create temporary container and build new content
+      const tempContainer = document.createElement('tbody');
+      tempContainer.innerHTML = paginatedProducts.map(product => ProductRow({ product })).join('');
+      
+      // Update DOM in a single operation
+      requestAnimationFrame(() => {
+        // Replace old tbody with new one
+        tableBody.parentNode.replaceChild(tempContainer, tableBody);
+        
+        // Update pagination and reinitialize click handlers
+        this.renderPagination();
+        this.clickTable();
+        
+        // Update showing count
+        const showingElement = document.querySelector('.pagination__showing');
+        if (showingElement) {
+          const totalItems = filteredProducts.length;
+          const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+          const end = Math.min(this.currentPage * this.itemsPerPage, totalItems);
+          showingElement.textContent = `Showing ${start}-${end} from ${totalItems}`;
+        }
+      });
     }
-    this.renderPagination();
   }
 }
 

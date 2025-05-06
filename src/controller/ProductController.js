@@ -1,15 +1,13 @@
 import axios from 'axios';
 import uploadToCloudinary from '../utils/uploadToCloudinary.js';
 import { API_URL } from '../config/apiurl.config.js';
+import { navigate } from '../utils/navigation';
+import ProductUIHandler from '../handlers/ui/ProductUIHandler.js';
 
 class ProductController {
     constructor() {
         this.API_URL = API_URL;
-
-    }
-
-    redirect(path) {
-        window.location.href = path;
+        this.uiHandler = new ProductUIHandler();
     }
 
     async handleImageUpload(file) {
@@ -113,6 +111,7 @@ class ProductController {
             skuInput, 
             priceInput, 
             descriptionInput, 
+            barcodeInput,
             quantityInput 
         } = elements;
 
@@ -128,7 +127,9 @@ class ProductController {
             status: statusText ? statusText.textContent.trim() : 'Draft',
             added: new Date().toISOString(),
             description: descriptionInput?.value.trim() || '',
+            barcode: barcodeInput?.value.trim() || '',
             stock: quantityInput?.value.trim() || '0',
+            quantity: quantityInput?.value.trim() || '0',
             ImageSrc: {
                 firstImg: validImages.length > 0 ? validImages[0].src : null,
                 secondImg: validImages.length > 1 ? validImages[1].src : null,
@@ -238,14 +239,8 @@ class ProductController {
         }
     }
 
-    setButtonLoading(button, isLoading, text = 'Add Category') {
-        if (button) {
-            button.disabled = isLoading;
-            const buttonText = button.querySelector('.button__text');
-            if (buttonText) {
-                buttonText.textContent = isLoading ? 'Processing...' : text;
-            }
-        }
+    setButtonLoading(button, isLoading, text = 'Add Product') {
+        this.uiHandler.setButtonLoading(button, isLoading, text);
     }
 
     setupImageHandling(elements) {
