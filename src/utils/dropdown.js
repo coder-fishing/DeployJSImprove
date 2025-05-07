@@ -1,41 +1,127 @@
 export const dropdown = (id, btn, content, text = null) => {
+    console.log(`Initializing dropdown: ${id}, ${btn}, ${content}`);
+    
     const dropdown = document.getElementById(id);
     const dropdownButton = document.getElementById(btn);
     const dropdownContent = document.getElementById(content);
     const statusText = text ? document.getElementById(text) : null;
 
-    const items = dropdownContent.querySelectorAll('div');
+    // Check if elements exist
+    if (!dropdown) {
+        console.error(`Dropdown container #${id} not found`);
+        return;
+    }
+    if (!dropdownButton) {
+        console.error(`Dropdown button #${btn} not found`);
+        return;
+    }
+    if (!dropdownContent) {
+        console.error(`Dropdown content #${content} not found`);
+        return;
+    }
 
-    items.forEach(item => {
-        item.addEventListener('click', (e) => {
-            const selectedValue = e.target.getAttribute('data-value');
-            const selectedId = e.target.getAttribute('data-id');
-            dropdownButton.textContent = selectedValue;
+    // Apply important initial styles directly
+    dropdownContent.style.cssText = "display: none; position: absolute; z-index: 1000;";
+    
+    // Make the button trigger the dropdown - use a direct onclick assignment that won't interfere with any 
+    // other onclick handlers
+    if (!dropdownButton.hasDropdownHandler) {
+        dropdownButton.hasDropdownHandler = true;
+        
+        // Save any existing onclick handler
+        const existingHandler = dropdownButton.onclick;
+        
+        dropdownButton.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            // Store the selected ID as a data attribute
-            if (selectedId) {
-                dropdownButton.setAttribute('data-selected-id', selectedId);
+            console.log(`Toggle dropdown: ${id}`);
+            
+            // First close all other dropdowns
+            document.querySelectorAll('.dropdown-content').forEach(dc => {
+                if (dc.id !== dropdownContent.id) {
+                    dc.style.display = 'none';
+                }
+            });
+            
+            // Then toggle the current dropdown
+            dropdownContent.style.display = 
+                dropdownContent.style.display === 'none' ? 'block' : 'none';
+            
+            // Call existing handler if it exists
+            if (existingHandler && typeof existingHandler === 'function') {
+                existingHandler(e);
             }
+        };
+    }
 
-            if (statusText) {
-                statusText.textContent = selectedValue;
-                const name = selectedValue.replace(/\s+/g, '-').toLowerCase();
-                statusText.classList.remove('draft', 'publish', 'out-of-stock', 'stock');
-                statusText.classList.add(name);
-            }
-
-            dropdownContent.style.display = 'none';
-        });
+    // Make each item in the dropdown selectable with direct onclick assignments
+    const items = dropdownContent.querySelectorAll('div');
+    items.forEach(item => {
+        if (!item.hasDropdownItemHandler) {
+            item.hasDropdownItemHandler = true;
+            
+            // Save any existing onclick handler
+            const existingHandler = item.onclick;
+            
+            // Add new handler
+            item.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const selectedValue = this.getAttribute('data-value') || this.textContent;
+                const selectedId = this.getAttribute('data-id');
+                
+                console.log(`Selected dropdown item: ${selectedValue}, ID: ${selectedId || 'none'}`);
+                
+                // Update the button text
+                dropdownButton.textContent = selectedValue;
+                
+                // Store selected ID if available
+                if (selectedId) {
+                    dropdownButton.setAttribute('data-selected-id', selectedId);
+                    console.log(`Set data-selected-id attribute to: ${selectedId}`);
+                } else {
+                    dropdownButton.removeAttribute('data-selected-id');
+                }
+                
+                // Update status text if available
+                if (statusText) {
+                    statusText.textContent = selectedValue;
+                    
+                    // Update status class
+                    const statusClass = selectedValue.toLowerCase().replace(/\s+/g, '-');
+                    statusText.className = `form-section__title-status--label-text ${statusClass}`;
+                    console.log(`Updated status text to: ${selectedValue}, class: ${statusClass}`);
+                }
+                
+                // Hide the dropdown after selection
+                dropdownContent.style.display = 'none';
+                
+                // Call existing handler if it exists
+                if (existingHandler && typeof existingHandler === 'function') {
+                    existingHandler(e);
+                }
+            };
+        }
     });
 
-    dropdownButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
-    });
-
-    document.addEventListener('click', (e) => {
+    // Close dropdown when clicking outside - add only once per dropdown
+    const clickOutsideHandler = function(e) {
         if (!dropdown.contains(e.target)) {
             dropdownContent.style.display = 'none';
         }
-    });
+    };
+    
+    // Remove any existing handlers first
+    document.removeEventListener('click', clickOutsideHandler);
+    document.addEventListener('click', clickOutsideHandler);
+    
+    // Return the dropdown elements for further customization
+    return {
+        container: dropdown,
+        button: dropdownButton,
+        content: dropdownContent,
+        statusText: statusText
+    };
 };

@@ -10,9 +10,7 @@ export default class editCategory {
         this.controller = new CategoryController();
         this.categoryId = window.location.pathname.split('/').pop();
         this.currentCategory = null;
-        this.render().then(() => {
-            this.setupImageHandling();
-        });
+        this.render();
     }
 
     setupImageHandling() {
@@ -24,33 +22,55 @@ export default class editCategory {
             uploadArea: document.querySelector('.thumbnail__upload-area')
         };
 
-        this.controller.setupImageHandling(elements);
+        if (elements.emptyState && elements.previewState && elements.imageInput) {
+            console.log('Setting up image handling for edit category');
+            this.controller.setupImageHandling(elements);
+        } else {
+            console.error('Image elements not found for setup');
+        }
     }
 
     setupEventListeners() {
-        const saveBtn = document.querySelector(".product-title__buttons--add");
+        const saveBtn = document.getElementById('saveCategoryBtn');
         const cancelBtn = document.querySelector(".product-title__buttons--cancel");
 
+        console.log('Edit category - Save button found:', !!saveBtn);
+        console.log('Edit category - Cancel button found:', !!cancelBtn);
+
         if (saveBtn) {
-            saveBtn.addEventListener("click", (e) => {
+            saveBtn.onclick = (e) => {
                 e.preventDefault();
+                console.log('Edit category - Save button clicked');
                 this.handleEditCategory();
-            });
+                return false;
+            };
         }
 
         if (cancelBtn) {
-            cancelBtn.addEventListener("click", () => {
+            cancelBtn.onclick = (e) => {
+                e.preventDefault();
+                console.log('Edit category - Cancel button clicked');
                 window.location.href = "/category";
-            });
+                return false;
+            };
         }
     }
 
     async handleEditCategory() {
+        console.log('handleEditCategory method called');
+        
         const nameInput = document.querySelector('input[name="categoryName"]');
         const descriptionInput = document.querySelector('textarea[name="description"]');
         const imageInput = document.getElementById('imageInput');
-        const submitButton = document.querySelector('.product-title__buttons--add');
+        const submitButton = document.getElementById('saveCategoryBtn');
     
+        console.log('Form elements:', {
+            nameInput: !!nameInput,
+            descriptionInput: !!descriptionInput,
+            imageInput: !!imageInput,
+            submitButton: !!submitButton
+        });
+        
         if (!nameInput || !descriptionInput) {
             console.error('One or more form elements not found');
             createToast('Form elements not found', 'error');
@@ -64,6 +84,12 @@ export default class editCategory {
             mode: 'edit'
         };
     
+        console.log('Form data collected:', {
+            name: formData.name,
+            description: formData.description.substring(0, 20) + '...',
+            hasImage: !!formData.imageUrl
+        });
+        
         const validation = this.controller.validateFormData(formData);
         if (!validation.isValid) {
             createToast(Object.values(validation.errors)[0], 'error');
@@ -96,7 +122,7 @@ export default class editCategory {
             createToast('Category updated successfully!', 'success');
             setTimeout(() => {
                 window.location.href = "/category";
-            }, 500);
+            }, 1000);
         } catch (error) {
             console.error('Error:', error);
             createToast('Failed to update category', 'error');
@@ -135,7 +161,7 @@ export default class editCategory {
                                 <figure class="button__icon"><img src="${cross}" alt="icon"/></figure>
                                 <span class="button__text">Cancel</span>
                             </button>
-                            <button class="product-title__buttons--add">
+                            <button class="product-title__buttons--add" id="saveCategoryBtn" style="cursor: pointer;">
                                 <figure class="button__icon"><img src="${save}" alt="icon" /></figure>
                                 <span class="button__text">Save Category</span>
                             </button>
@@ -146,7 +172,12 @@ export default class editCategory {
             `;
             
             document.querySelector(".content").innerHTML = content;
-            this.setupEventListeners();
+            
+            // Setup event listeners after rendering
+            setTimeout(() => {
+                this.setupEventListeners();
+                this.setupImageHandling();
+            }, 100);
         } catch (error) {
             console.error("Error in render:", error);
             document.querySelector(".content").innerHTML = "<p>Error loading category</p>";

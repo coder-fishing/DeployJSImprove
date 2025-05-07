@@ -1,8 +1,14 @@
 import { forceHideLoading, showLoading } from './loading';
 
 export const navigate = (path) => {
+    // Log navigation attempt
+    console.log('Navigation requested to:', path);
+    
     // Prevent multiple rapid navigations
-    if (window.isNavigating) return;
+    if (window.isNavigating) {
+        console.log('Navigation in progress, ignoring request');
+        return;
+    }
     window.isNavigating = true;
 
     // Show loading before navigation
@@ -11,15 +17,11 @@ export const navigate = (path) => {
     // Force hide any existing loading states
     forceHideLoading();
     
-    // Use history API to update URL and trigger router
-    history.pushState({}, '', path);
+    // IMPORTANT: Use direct URL change instead of history API for more reliable navigation
+    console.log('Using direct location change for path:', path);
+    window.location.href = path;
     
-    // Dispatch a custom event that Router will listen to
-    window.dispatchEvent(new CustomEvent('navigation', { 
-        detail: { path }
-    }));
-
-    // Reset navigation flag after a short delay
+    // Reset navigation flag after a short delay - though this won't be needed with direct navigation
     setTimeout(() => {
         window.isNavigating = false;
     }, 300);

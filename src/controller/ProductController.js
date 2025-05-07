@@ -72,7 +72,8 @@ class ProductController {
             return { isValid: false, errors };
         }
 
-        if (!data.sku || data.sku.trim() === '') {
+        // Only check SKU in 'add' mode (not required in edit mode if already exists)
+        if ((!data.mode || data.mode !== 'edit') && (!data.sku || data.sku.trim() === '')) {
             errors.sku = 'SKU is required';
             document.querySelector('input[name="sku"]')?.focus();
             return { isValid: false, errors };
@@ -184,7 +185,9 @@ class ProductController {
 
     async updateProduct(id, productData) {
         try {
+            console.log(`Updating product with ID ${id} with data:`, productData);
             const response = await axios.put(`${this.API_URL}/product/${id}`, productData);
+            console.log('Update response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error updating product:', error);
@@ -255,6 +258,13 @@ class ProductController {
             deleteButtons 
         } = elements;
 
+        if (!emptyState || !filledState || (!imageInputEmpty && !imageInputFilled)) {
+            console.error('Required image elements not found for product setup');
+            return;
+        }
+
+        console.log('Setting up image handling in ProductController');
+        
         let currentImages = [];
         
         // Kiểm tra ảnh hợp lệ (chỉ nhận ảnh từ Cloudinary)
@@ -278,84 +288,111 @@ class ProductController {
                 frames[index].style.display = 'none';
             }
         });
-
-        // Setup upload buttons
-        if (uploadButtons.length > 1) {
-            uploadButtons[0].addEventListener('click', () => imageInputEmpty.click());
-            uploadButtons[1].addEventListener('click', () => imageInputFilled.click());
-        }
-
-        // Setup delete buttons
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                const frame = frames[index];
-                const img = previewImages[index];
-                
-                img.src = '';
-                frame.style.display = 'none';
-                currentImages[index] = null;
-                
-                // Kiểm tra ảnh còn lại
-                const remainingValidImages = Array.from(previewImages)
-                    .filter(img => isValidImage(img.src));
-                this.updateUIState(emptyState, filledState, remainingValidImages.length > 0);
-            });
-        });
-
-        // Setup image upload handling
+        
+        // Hàm xử lý upload ảnh - simplified
         const handleImageUpload = async (event) => {
+            console.log('Image input change event triggered');
             const files = event.target.files;
             
-            if (files.length > 0) {
-                try {
-                    const newFiles = Array.from(files);
-                    let emptySlotIndex = -1;
-                    
-                    // Tìm vị trí trống đầu tiên
-                    previewImages.forEach((img, index) => {
-                        if (emptySlotIndex === -1 && !isValidImage(img.src)) {
-                            emptySlotIndex = index;
-                        }
-                    });
-
-                    if (emptySlotIndex === -1) {
-                        alert("All image slots are filled. Please remove an image first.");
-                        return;
+            if (!files || files.length === 0) {
+                console.log('No files selected');
+                return;
+            }
+            
+            console.log('Image files selected:', files.length);
+            
+            try {
+                const file = files[0]; // Get the first file only
+                let emptySlotIndex = -1;
+                
+                // Find the first empty slot
+                for (let i = 0; i < previewImages.length; i++) {
+                    if (!isValidImage(previewImages[i].src)) {
+                        emptySlotIndex = i;
+                        break;
                     }
-
-                    // Hiển thị preview cho ảnh mới
-                    for (let i = 0; i < newFiles.length; i++) {
-                        if (emptySlotIndex + i < previewImages.length) {
-                            const file = newFiles[i];
-                            await this.setupImagePreview(file, previewImages[emptySlotIndex + i]);
-                            frames[emptySlotIndex + i].style.display = 'block';
-                        }
-                    }
-
-                    // Luôn hiển thị filled state khi có ảnh preview
-                    this.updateUIState(emptyState, filledState, true);
-                } catch (error) {
-                    console.error('Error handling images:', error);
-                    alert('Error uploading images. Please try again.');
                 }
+                
+                if (emptySlotIndex === -1) {
+                    alert("All image slots are filled. Please remove an image first.");
+                    return;
+                }
+                
+                // Show the preview
+                console.log(`Setting up preview for image in slot ${emptySlotIndex}`);
+                await this.setupImagePreview(file, previewImages[emptySlotIndex]);
+                frames[emptySlotIndex].style.display = 'block';
+                
+                // Update UI state
+                this.updateUIState(emptyState, filledState, true);
+                
+            } catch (error) {
+                console.error('Error handling image upload:', error);
+                alert('Error uploading image. Please try again.');
             }
         };
 
-        imageInputEmpty.addEventListener('change', handleImageUpload);
-        imageInputFilled.addEventListener('change', handleImageUpload);
+        // Set up image input handlers
+        if (imageInputEmpty) {
+            console.log('Setting up empty state image input handler');
+            imageInputEmpty.value = ''; // Clear any existing value
+            
+            // Use direct onchange
+            imageInputEmpty.onchange = handleImageUpload;
+        }
+        
+        if (imageInputFilled) {
+            console.log('Setting up filled state image input handler');
+            imageInputFilled.value = ''; // Clear any existing value
+            
+            // Use direct onchange
+            imageInputFilled.onchange = handleImageUpload;
+        }
 
-        // Return cleanup function
-        return () => {
-            imageInputEmpty.removeEventListener('change', handleImageUpload);
-            imageInputFilled.removeEventListener('change', handleImageUpload);
-            uploadButtons.forEach(btn => {
-                btn.replaceWith(btn.cloneNode(true));
+        // Setup direct button handlers (as a backup)
+        if (uploadButtons && uploadButtons.length > 0) {
+            if (uploadButtons[0] && imageInputEmpty) {
+                uploadButtons[0].onclick = (e) => {
+                    e.preventDefault();
+                    console.log('Empty state upload button clicked from controller');
+                    imageInputEmpty.click();
+                    return false;
+                };
+            }
+            
+            if (uploadButtons.length > 1 && uploadButtons[1] && imageInputFilled) {
+                uploadButtons[1].onclick = (e) => {
+                    e.preventDefault();
+                    console.log('Filled state upload button clicked from controller');
+                    imageInputFilled.click();
+                    return false;
+                };
+            }
+        }
+
+        // Setup delete buttons with direct onclick handlers
+        if (deleteButtons && deleteButtons.length > 0) {
+            deleteButtons.forEach((button, i) => {
+                button.onclick = (e) => {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    console.log(`Delete button clicked for image ${index}`);
+                    
+                    const frame = frames[index];
+                    const img = previewImages[index];
+                    
+                    img.src = '';
+                    frame.style.display = 'none';
+                    currentImages[index] = null;
+                    
+                    // Check remaining images
+                    const remainingValidImages = Array.from(previewImages)
+                        .filter(img => isValidImage(img.src));
+                    
+                    console.log(`Remaining valid images: ${remainingValidImages.length}`);
+                    this.updateUIState(emptyState, filledState, remainingValidImages.length > 0);
+                };
             });
-            deleteButtons.forEach(btn => {
-                btn.replaceWith(btn.cloneNode(true));
-            });
-        };
+        }
     }
 }
 

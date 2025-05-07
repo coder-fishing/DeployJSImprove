@@ -190,7 +190,11 @@
                         font-weight: 500;
                         line-height: 1.25rem; 
                         letter-spacing: 0.00438rem;
-                
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        min-width: 0;
+                        max-width: 100%;
                     }
                 }
             }

@@ -49,7 +49,8 @@ class CategoryListView extends BaseView {
         // Add button handler
         const addButton = e.target.closest('.product-title__buttons--add');
         if (addButton && addButton.closest('.product-list')) {
-            navigate('/addcategory');
+            console.log('Add Category button clicked, navigating to /addcategory');
+            window.location.href = '/addcategory';  // Use direct location change instead of navigate
             return;
         }
 
@@ -58,7 +59,7 @@ class CategoryListView extends BaseView {
         if (editButton) {
             const categoryId = editButton.getAttribute('data-id');
             if (categoryId) {
-                navigate(`/editcategory/${categoryId}`);
+                window.location.href = `/editcategory/${categoryId}`;  // Use direct location change instead of navigate
             }
             return;
         }
