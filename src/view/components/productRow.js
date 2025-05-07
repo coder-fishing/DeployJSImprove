@@ -27,7 +27,7 @@ const ProductRow = ({ product }) => {
                 <div class="product-table__item--sku" title="${product.sku}">${formatters.formatSKU(product.sku)}</div>
           </td>
           <td class="product-table__item">
-                <div class="product-table__item--categories">${product.category || 'undefined'}</div>
+                <div class="product-table__item--categories" title="${product.category || 'undefined'}">${product.category || 'undefined'}</div>
           </td>
           <td class="product-table__item">
                 <div class="product-table__item--stock">${formatters.formatStock(product.quantity)}</div>
