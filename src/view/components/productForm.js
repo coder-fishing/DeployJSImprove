@@ -25,7 +25,7 @@ function productForm({ mode = 'create', productData = {} }) {
                         </figure>
                         <p class="media__upload-text">Drag and drop image here, or click add image</p>
                         <input type="file" id="imageInputEmpty" accept="image/*" style="display: none;">
-                        <button class="media__upload-btn">Add Image</button>
+                        <button class="media__upload-btn" type="button" onclick="document.getElementById('imageInputEmpty').click(); return false;">Add Image</button>
                     </div>   
     
                     <div class="media__upload-area upload-filled" id="filledState" style="display: ${mode === 'edit' && productData.ImageSrc?.firstImg ? 'flex' : 'none'}">
@@ -45,7 +45,7 @@ function productForm({ mode = 'create', productData = {} }) {
                         </div> 
                         <p class="media__upload-text">Drag and drop image here, or click add image</p>
                         <input type="file" id="imageInputFilled" accept="image/*" style="display: none;">
-                        <button class="media__upload-btn">Add Image</button>
+                        <button class="media__upload-btn" type="button" onclick="document.getElementById('imageInputFilled').click(); return false;">Add Image</button>
                     </div>                 
                 </div>
             </div>          
@@ -89,7 +89,7 @@ function productForm({ mode = 'create', productData = {} }) {
                 <div class="field_container">
                     <div class="form-section__field">
                         <p class="form-section__field--name">SKU</p>
-                        <input class="form-section__field--input" type="text" placeholder="Type product SKU here..." name="sku" value="${productData.sku || ''}">
+                        <input class="form-section__field--input" type="text" placeholder="Type product SKU here..." name="sku" value="${productData.sku || ''}" ${mode === 'edit' ? 'readonly' : ''}>
                     </div>
                     <div class="form-section__field">
                         <p class="form-section__field--name">Barcode</p>
@@ -110,17 +110,16 @@ function productForm({ mode = 'create', productData = {} }) {
                 </div>
                 <div class="dropdown" id="dropdowntop">
                     <div class="dropdown-group">
-                        <div class="dropbtn" id="dropdownButtonTop">${productData.category || 'None'}</div>
+                        <div class="dropbtn" id="dropdownButtonTop" onclick="
+                            const content = document.getElementById('dropdownContentTop');
+                            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                            event.stopPropagation();
+                            return false;
+                        ">${productData.category || 'None'}</div>
                         <img src="${caretDown}" alt="caret-down" class="caret-down"/>
                     </div>
                     <div class="dropdown-content" id="dropdownContentTop">
-                        <div data-value="Bag & Pouch">Bag & Pouch</div>
-                        <div data-value="Watch">Watch</div>
-                        <div data-value="Audio">Audio</div>
-                        <div data-value="Shoes">Shoes</div>
-                        <div data-value="Accessories">Accessories</div>
-                        <div data-value="Mouse">Mouse</div>
-                        <div data-value="Keyboard">Keyboard</div>
+                        <!-- Categories will be loaded dynamically from the API -->
                     </div>
                 </div>            
             </div>  
@@ -136,7 +135,12 @@ function productForm({ mode = 'create', productData = {} }) {
                 </div> 
                 <div class="dropdown" id="dropdown">
                     <div class="dropdown-group">
-                        <div class="dropbtn" id="dropdownButton">${productData.status || 'Draft'}</div>
+                        <div class="dropbtn" id="dropdownButton" onclick="
+                            const content = document.getElementById('dropdownContent');
+                            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                            event.stopPropagation();
+                            return false;
+                        ">${productData.status || 'Draft'}</div>
                         <img src="${caretDown}" alt="caret-down" class="caret-down"/>
                     </div>
                     <div class="dropdown-content" id="dropdownContent">

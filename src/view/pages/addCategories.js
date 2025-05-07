@@ -10,7 +10,6 @@ class addCategories {
     constructor() {
         this.controller = new CategoryController();
         this.render();
-        this.setupImageHandling();
     }
 
     setupImageHandling() {
@@ -22,33 +21,55 @@ class addCategories {
             uploadArea: document.querySelector('.thumbnail__upload-area')
         };
 
-        this.controller.setupImageHandling(elements);
+        if (elements.emptyState && elements.previewState && elements.imageInput) {
+            console.log('Setting up image handling for add category');
+            this.controller.setupImageHandling(elements);
+        } else {
+            console.error('Image elements not found for setup');
+        }
     }
 
     setupEventListeners() {
-        const saveBtn = document.querySelector(".product-title__buttons--add");
+        const saveBtn = document.getElementById('saveCategoryBtn');
         const cancelBtn = document.querySelector(".product-title__buttons--cancel");
 
+        console.log('Save button found:', !!saveBtn);
+        console.log('Cancel button found:', !!cancelBtn);
+
         if (saveBtn) {
-            saveBtn.addEventListener("click", (e) => {
+            saveBtn.onclick = (e) => {
                 e.preventDefault();
+                console.log('Save button clicked');
                 this.handleAddCategory();
-            });
+                return false;
+            };
         }
 
         if (cancelBtn) {
-            cancelBtn.addEventListener("click", () => {
+            cancelBtn.onclick = (e) => {
+                e.preventDefault();
+                console.log('Cancel button clicked');
                 window.location.href = "/category";
-            });
+                return false;
+            };
         }
     }
 
     async handleAddCategory() {
+        console.log('handleAddCategory method called');
+        
         const nameInput = document.querySelector('input[name="categoryName"]');
         const descriptionInput = document.querySelector('textarea[name="description"]');
         const imageInput = document.getElementById('imageInput');
-        const submitButton = document.querySelector('.product-title__buttons--add');
+        const submitButton = document.getElementById('saveCategoryBtn');
     
+        console.log('Form elements:', {
+            nameInput: !!nameInput,
+            descriptionInput: !!descriptionInput,
+            imageInput: !!imageInput,
+            submitButton: !!submitButton
+        });
+        
         if (!nameInput || !descriptionInput || !imageInput) {
             console.error('One or more form elements not found');
             createToast('Form elements not found', 'error');
@@ -62,6 +83,12 @@ class addCategories {
             mode: 'create'
         };
     
+        console.log('Form data collected:', {
+            name: formData.name,
+            description: formData.description.substring(0, 20) + '...',
+            hasImage: !!formData.imageUrl
+        });
+        
         const validation = this.controller.validateFormData(formData);
         if (!validation.isValid) {
             createToast(Object.values(validation.errors)[0], 'error');
@@ -78,7 +105,7 @@ class addCategories {
             createToast('Category added successfully!', 'success');
             setTimeout(() => {
                 window.location.href = "/category";
-            }, 500);
+            }, 1000);
         } catch (error) {
             console.error('Error:', error);
             createToast('Failed to add category', 'error');
@@ -109,9 +136,9 @@ class addCategories {
                                 <figure class="button__icon"><img src="${cross}" alt="icon"/></figure>
                                 <span class="button__text">Cancel</span>
                             </button>
-                            <button class="product-title__buttons--add">
+                            <button class="product-title__buttons--add" id="saveCategoryBtn" style="cursor: pointer;">
                                 <figure class="button__icon"><img src="${save}" alt="icon" /></figure>
-                                <span class="button__text">Add Category</span>
+                                <span class="button__text">Save Category</span>
                             </button>
                         </div>
                     </div>
@@ -119,7 +146,12 @@ class addCategories {
                 </div>
             `;
             document.querySelector(".content").innerHTML = content;
-            this.setupEventListeners();
+            
+            // Setup event listeners after rendering
+            setTimeout(() => {
+                this.setupEventListeners();
+                this.setupImageHandling();
+            }, 100);
         } catch (error) {
             console.error('Error rendering form:', error);
             createToast('Failed to load form', 'error');

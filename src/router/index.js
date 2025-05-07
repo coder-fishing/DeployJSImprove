@@ -17,6 +17,18 @@ export class Router {
         window.addEventListener('beforeunload', () => {
             forceHideLoading();
         });
+        
+        // Set up a fallback method for direct URL navigation
+        this.setupUrlChangeDetection();
+    }
+    
+    setupUrlChangeDetection() {
+        // Create a method that apps can call to navigate directly without history API
+        window.directNavigate = (path) => {
+            console.log('Direct navigation to:', path);
+            // We'll use location.href directly for most reliable navigation
+            window.location.href = path;
+        };
     }
 
     loadInitialRoute() {
@@ -24,6 +36,7 @@ export class Router {
     }
 
     navigate(path) {
+        console.log('Router navigate called with path:', path);
         // Reset loading state before navigation
         forceHideLoading();
         history.pushState({}, '', path);
@@ -53,6 +66,7 @@ export class Router {
 
     async loadRoute(path = location.pathname) {
         try {
+            console.log('Loading route for path:', path);
             // Reset any existing loading state
             forceHideLoading();
             showLoading();
@@ -68,6 +82,7 @@ export class Router {
                 return regex.test(path);
             });
 
+            console.log('Route found:', route ? route.path : 'not found');
             if (route) {
                 // Only render layout if it's not already rendered
                 if (!document.querySelector('.container')) {
@@ -80,6 +95,7 @@ export class Router {
                     // Get route params
                     const params = this.getRouteParams(route.path, path);
                     
+                    console.log('Initializing controller and view for path:', path);
                     // Initialize controller first
                     const controller = new route.controller();
                     
@@ -101,6 +117,7 @@ export class Router {
 
                     // Render view content
                     await view.render();
+                    console.log('View rendered for path:', path);
                 }
             } else {
                 document.querySelector("#app").innerHTML = "<h2>404 Not Found</h2>";
