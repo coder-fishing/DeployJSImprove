@@ -60,26 +60,29 @@ function productForm({ mode = 'create', productData = {} }) {
                     <div class="form-section__field">
                         <p class="form-section__field--name">Discount Type</p>
                         <select class="form-section__field--input" name="discountType">
-                            <option value="no-discount" ${!productData.discount_type || productData.discount_type === 'no-discount' ? 'selected' : ''}>No Discount</option>
-                            <option value="percentage" ${productData.discount_type === 'percentage' ? 'selected' : ''}>Percentage</option>
+                            <option value="no-discount" ${!productData.discountType || productData.discountType === 'no-discount' ? 'selected' : ''}>No Discount</option>
+                            <option value="percentage" ${productData.discountType === 'percentage' ? 'selected' : ''}>Percentage</option>
+                            <option value="fixed" ${productData.discountType === 'fixed' ? 'selected' : ''}>Fixed Amount</option>
+                            <option value="discount_type_86" ${productData.discountType === 'discount_type_86' ? 'selected' : ''}>Discount Type 86</option>
                         </select>  
                     </div>  
                     <div class="form-section__field">
-                        <p class="form-section__field--name">Discount Percentage %</p>
-                        <input class="form-section__field--input" type="text" placeholder="Type discount percentage..." name="discountPercentage" value="${productData.discount_value || ''}">
+                        <p class="form-section__field--name">Discount Value</p>
+                        <input class="form-section__field--input" type="text" placeholder="Type discount value..." name="discountValue" value="${productData.discountValue || ''}">
                     </div>
                 </div>
                 <div class="form-section__split">
                     <div class="form-section__field">
                         <p class="form-section__field--name">Tax Class</p>
                         <select class="form-section__field--input" name="taxClass">
-                            <option value="tax-free" ${!productData.tax_class || productData.tax_class === 'tax-free' ? 'selected' : ''}>Tax Free</option>
-                            <option value="vat" ${productData.tax_class === 'vat' ? 'selected' : ''}>VAT</option>
+                            <option value="tax-free" ${!productData.taxClass || productData.taxClass === 'tax-free' ? 'selected' : ''}>Tax Free</option>
+                            <option value="vat" ${productData.taxClass === 'vat' ? 'selected' : ''}>VAT</option>
+                            <option value="tax_class_86" ${productData.taxClass === 'tax_class_86' ? 'selected' : ''}>Tax Class 86</option>
                         </select>
                     </div>
                     <div class="form-section__field">
                         <p class="form-section__field--name">VAT Amount</p>
-                        <input class="form-section__field--input" type="text" placeholder="Type VAT amount..." name="vatAmount" value="${productData.vat_amount || ''}">
+                        <input class="form-section__field--input" type="text" placeholder="Type VAT amount..." name="vatAmount" value="${productData.vatAmount || ''}">
                     </div>
                 </div>     
             </div>

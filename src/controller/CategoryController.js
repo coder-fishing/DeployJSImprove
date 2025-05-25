@@ -5,7 +5,7 @@ import CategoryUIHandler from '../handlers/ui/CategoryUIHandler.js';
 
 class CategoryController {
     constructor() {
-        this.API_URL = API_URL;
+        this.API_URL = API_URL; 
         this.uiHandler = new CategoryUIHandler();
     }
 
@@ -15,15 +15,15 @@ class CategoryController {
         if (!formData.name || formData.name.length < 3) {
             errors.name = 'Name must be at least 3 characters long';
         }
-        
+
         if (!formData.description || formData.description.length < 10) {
             errors.description = 'Description must be at least 10 characters long';
         }
-        
+
         if (formData.mode === 'create' && !formData.imageUrl) {
             errors.image = 'Please select an image';
         }
-        
+
         return {
             isValid: Object.keys(errors).length === 0,
             errors

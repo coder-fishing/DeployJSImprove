@@ -193,8 +193,8 @@ class ProductListView {
           
           // Then update UI in a controlled manner
           requestAnimationFrame(() => {
-            this.renderTableOnly();
-            createToast('Selected products deleted successfully', 'success');
+          this.renderTableOnly();
+          createToast('Selected products deleted successfully', 'success');
           });
         } catch (error) {
           console.error('Error deleting products:', error);
@@ -224,8 +224,18 @@ class ProductListView {
         const skuMatch = product.sku && typeof product.sku === 'string' && 
                         product.sku.toLowerCase().includes(query);       
         const categoryMatch = product.category && typeof product.category === 'string' && 
-                             product.category.toLowerCase().includes(query);        
-        return nameMatch || skuMatch || categoryMatch;
+                             product.category.toLowerCase().includes(query);
+        const descriptionMatch = product.description && typeof product.description === 'string' &&
+                                product.description.toLowerCase().includes(query);
+        
+        // Enhanced category search
+        const categoryWords = product.category ? product.category.toLowerCase().split(' ') : [];
+        const queryWords = query.split(' ');
+        const categoryPartialMatch = queryWords.some(word => 
+          categoryWords.some(catWord => catWord.includes(word))
+        );
+        
+        return nameMatch || skuMatch || categoryMatch || descriptionMatch || categoryPartialMatch;
       });
     }
     
@@ -359,10 +369,10 @@ class ProductListView {
               <img src="${download}" alt="icon" class="button__icon" />
               <span class="button__text">Export</span>
             </button>
-            <button class="product-title__buttons--add">
-              <img src="${add}" alt="icon" class="button__icon" />
-              <span class="button__text">Add product</span>
-            </button>
+              <button class="product-title__buttons--add">
+                <img src="${add}" alt="icon" class="button__icon" />
+                <span class="button__text">Add product</span>
+              </button>
           </div>
         </div>
  
@@ -489,7 +499,7 @@ class ProductListView {
         
         // Update pagination and reinitialize click handlers
         this.renderPagination();
-        this.clickTable();
+      this.clickTable();
         
         // Update showing count
         const showingElement = document.querySelector('.pagination__showing');

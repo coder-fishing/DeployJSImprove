@@ -3,7 +3,7 @@ import { formatters } from "../../utils/formatters.js";
 import { navigate } from "../../utils/navigation";
 
 const CategoryRow = ({ category }) => {
-    return (`
+  return (`
       <tr class="product-table__row" data-id="${category.categoryID}">
           <td class="product-table__item"> 
             <div class="product-table__name">
@@ -35,8 +35,8 @@ const CategoryRow = ({ category }) => {
           <td class="product-table__item">
               <div class="product-table__item--buttons">
                   <span class="product-table__edit" onclick="navigate('/editcategory/' + '${category.categoryID}')" data-id="${category.categoryID}">
-                       <img src="${pencil}" alt="pencil"/> 
-                  </span>
+                             <img src="${pencil}" alt="pencil"/> 
+                        </span>
                   <span class="product-table__view">
                         <img src="${eye}" alt="eye"/>
                   </span>

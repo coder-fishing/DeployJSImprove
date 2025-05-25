@@ -241,6 +241,10 @@ export class editProduct {
         const stockInput = document.querySelector('input[name="quantity"]');
         const skuInput = document.querySelector('input[name="sku"]');
         const barcodeInput = document.querySelector('input[name="barcode"]');
+        const discountTypeSelect = document.querySelector('select[name="discountType"]');
+        const discountValueInput = document.querySelector('input[name="discountValue"]');
+        const taxClassSelect = document.querySelector('select[name="taxClass"]');
+        const vatAmountInput = document.querySelector('input[name="vatAmount"]');
         
         const imageInputEmpty = document.getElementById('imageInputEmpty');
         const imageInputFilled = document.getElementById('imageInputFilled');
@@ -258,7 +262,11 @@ export class editProduct {
             price: priceInput?.value,
             stock: stockInput?.value,
             category: categoryDropdown?.textContent,
-            imageFiles: activeImageInput?.files?.length || 0
+            imageFiles: activeImageInput?.files?.length || 0,
+            discountType: discountTypeSelect?.value,
+            discountValue: discountValueInput?.value,
+            taxClass: taxClassSelect?.value,
+            vatAmount: vatAmountInput?.value
         });
 
         if (!nameInput || !descriptionInput || !priceInput || !stockInput || !categoryDropdown) {
@@ -285,6 +293,10 @@ export class editProduct {
             status: statusText?.textContent || this.currentProduct.status || 'Draft',
             imageUrl: activeImageInput?.files[0] || null,
             previewImages: previewImages,
+            discountType: discountTypeSelect?.value || this.currentProduct.discountType || 'no-discount',
+            discountValue: discountValueInput?.value.trim() || this.currentProduct.discountValue || '0',
+            taxClass: taxClassSelect?.value || this.currentProduct.taxClass || 'tax-free',
+            vatAmount: vatAmountInput?.value.trim() || this.currentProduct.vatAmount || '0',
             mode: 'edit'
         };
 
@@ -301,11 +313,16 @@ export class editProduct {
         const hasPriceChanged = formData.price !== this.currentProduct.price;
         const hasStockChanged = formData.stock !== this.currentProduct.stock;
         const hasCategoryChanged = formData.categoryId !== this.currentProduct.category_ID;
+        const hasDiscountTypeChanged = formData.discountType !== this.currentProduct.discountType;
+        const hasDiscountValueChanged = formData.discountValue !== this.currentProduct.discountValue;
+        const hasTaxClassChanged = formData.taxClass !== this.currentProduct.taxClass;
+        const hasVatAmountChanged = formData.vatAmount !== this.currentProduct.vatAmount;
         const hasImageChanged = activeImageInput?.files?.length > 0;
         const hasStatusChanged = formData.status !== this.currentProduct.status;
 
         if (!hasNameChanged && !hasDescriptionChanged && !hasPriceChanged && 
-            !hasStockChanged && !hasCategoryChanged && !hasImageChanged && !hasStatusChanged) {
+            !hasStockChanged && !hasCategoryChanged && !hasImageChanged && !hasStatusChanged &&
+            !hasDiscountTypeChanged && !hasDiscountValueChanged && !hasTaxClassChanged && !hasVatAmountChanged) {
             window.location.href = "/";
             return;
         }
@@ -350,10 +367,10 @@ export class editProduct {
                 stock: formData.stock,
                 quantity: formData.stock,
                 barcode: formData.barcode,
-                discount_type: this.currentProduct.discount_type || "no-discount",
-                discount_value: this.currentProduct.discount_value || "0",
-                tax_class: this.currentProduct.tax_class || "tax-free",
-                vat_amount: this.currentProduct.vat_amount || "0"
+                discount_type: formData.discountType,
+                discount_value: formData.discountValue,
+                tax_class: formData.taxClass,
+                vat_amount: formData.vatAmount
             };
 
             console.log('Product data to update:', productData);

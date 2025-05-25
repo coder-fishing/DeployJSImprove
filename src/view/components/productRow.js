@@ -3,7 +3,7 @@ import { formatters } from "../../utils/formatters.js";
 import { navigate } from "../../utils/navigation";
 
 const ProductRow = ({ product }) => {
-    return (`
+  return (`
       <tr class="product-table__row" data-id="${product.id}">
           <td class="product-table__item"> 
             <div class="product-table__name">
@@ -31,9 +31,9 @@ const ProductRow = ({ product }) => {
           </td>
           <td class="product-table__item">
                 <div class="product-table__item--stock">${formatters.formatStock(product.quantity)}</div>
-          </td>
+          </td> 
           <td class="product-table__item">
-              <div class="product-table__item--price">${formatters.formatPrice(product.price)}</div>
+                <div class="product-table__item--price">${formatters.formatPrice(product.price)}</div>
           </td> 
           <td class="product-table__item">
                   <div class="product-table__item--status">
@@ -49,8 +49,8 @@ const ProductRow = ({ product }) => {
           <td class="product-table__item">
               <div class="product-table__item--buttons">
                   <span class="product-table__edit" data-id="${product.id}">
-                       <img src="${pencil}" alt="pencil"/> 
-                  </span>
+                             <img src="${pencil}" alt="pencil"/> 
+                        </span>
                   <span class="product-table__view">
                         <img src="${eye}" alt="eye"/>
                   </span>

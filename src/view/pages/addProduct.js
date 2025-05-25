@@ -204,6 +204,10 @@ export class addProduct {
         const stockInput = document.querySelector('input[name="quantity"]');
         const skuInput = document.querySelector('input[name="sku"]');
         const barcodeInput = document.querySelector('input[name="barcode"]');
+        const discountTypeSelect = document.querySelector('select[name="discountType"]');
+        const discountValueInput = document.querySelector('input[name="discountValue"]');
+        const taxClassSelect = document.querySelector('select[name="taxClass"]');
+        const vatAmountInput = document.querySelector('input[name="vatAmount"]');
         
         // Lấy cả input ảnh trống và đã có ảnh
         const imageInputEmpty = document.getElementById('imageInputEmpty');
@@ -223,7 +227,11 @@ export class addProduct {
             price: priceInput?.value,
             stock: stockInput?.value,
             category: categoryDropdown?.textContent,
-            imageFiles: activeImageInput?.files?.length || 0
+            imageFiles: activeImageInput?.files?.length || 0,
+            discountType: discountTypeSelect?.value,
+            discountValue: discountValueInput?.value,
+            taxClass: taxClassSelect?.value,
+            vatAmount: vatAmountInput?.value
         });
 
         if (!nameInput || !descriptionInput || !priceInput || !stockInput || !categoryDropdown || !skuInput) {
@@ -251,6 +259,10 @@ export class addProduct {
             status: statusText?.textContent || 'Draft',
             imageUrl: activeImageInput?.files[0] || null,
             previewImages: previewImages,
+            discountType: discountTypeSelect?.value || 'no-discount',
+            discountValue: discountValueInput?.value.trim() || '0',
+            taxClass: taxClassSelect?.value || 'tax-free',
+            vatAmount: vatAmountInput?.value.trim() || '0',
             mode: 'create'
         };
 
@@ -308,20 +320,20 @@ export class addProduct {
             };
 
             console.log('Saving product data:', productData);
-            await this.controller.saveProduct(productData);
+                await this.controller.saveProduct(productData);
             createToast('Product added successfully!', 'success');
             
             // Redirect to homepage with delay to show success message
             setTimeout(() => {
                 window.location.href = "/";
             }, 1000);
-        } catch (error) {
+            } catch (error) {
             console.error('Error:', error);
-            createToast('Failed to add product', 'error');
-        } finally {
-            hideLoading();
+                createToast('Failed to add product', 'error');
+            } finally {
+                hideLoading();
             this.controller.setButtonLoading(submitButton, false);
-        }
+            }
     }
 
     render = async () => {
@@ -360,7 +372,7 @@ export class addProduct {
                 // First setup event listeners
                 this.setupEventListeners();
                 // Then load categories
-                await this.loadCategories();
+            await this.loadCategories();
                 // Finally setup image handling
                 this.setupProductImageHandling();
             }, 100);
@@ -374,16 +386,16 @@ export class addProduct {
         console.log('Setting up image handling for addProduct');
             
         // Lấy tất cả các phần tử liên quan đến hình ảnh
-        const imageElements = {
-            emptyState: document.getElementById('emptyState'),
-            filledState: document.getElementById('filledState'),
-            imageInputEmpty: document.getElementById('imageInputEmpty'),
-            imageInputFilled: document.getElementById('imageInputFilled'),
-            uploadButtons: document.querySelectorAll('.media__upload-btn'),
-            previewImages: document.querySelectorAll('.preview-img'),
-            frames: document.querySelectorAll('.list-image-preview'),
-            deleteButtons: document.querySelectorAll('.delete-image')
-        };
+            const imageElements = {
+                emptyState: document.getElementById('emptyState'),
+                filledState: document.getElementById('filledState'),
+                imageInputEmpty: document.getElementById('imageInputEmpty'),
+                imageInputFilled: document.getElementById('imageInputFilled'),
+                uploadButtons: document.querySelectorAll('.media__upload-btn'),
+                previewImages: document.querySelectorAll('.preview-img'),
+                frames: document.querySelectorAll('.list-image-preview'),
+                deleteButtons: document.querySelectorAll('.delete-image')
+            };
 
         // Kiểm tra các phần tử có tồn tại không
         console.log('Image elements found:', {
@@ -398,7 +410,7 @@ export class addProduct {
         });
 
         // Cấu hình tất cả các trình xử lý hình ảnh với controller
-        this.controller.setupImageHandling(imageElements);
+            this.controller.setupImageHandling(imageElements);
         
         // Gắn trực tiếp sự kiện onclick cho các nút Add Image
         const uploadButtons = document.querySelectorAll('.media__upload-btn');

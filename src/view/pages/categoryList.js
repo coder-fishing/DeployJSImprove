@@ -126,7 +126,7 @@ class CategoryListView extends BaseView {
                 }
             }
         });
-    }
+      }
 
     setupBulkActions() {
         this.addGlobalEventListener('click', (e) => {
@@ -162,28 +162,28 @@ class CategoryListView extends BaseView {
             title: 'Delete Categories',
             message: `Are you sure you want to delete ${this.selectedCategories.size} selected categories?`,
             onConfirm: async () => {
-                try {
-                    showLoading();
-                    const deletePromises = Array.from(this.selectedCategories).map(id => 
-                        axios.delete(`${this.API_URL}/cate/${id}`)
-                    );
+            try {
+                showLoading();
+                const deletePromises = Array.from(this.selectedCategories).map(id => 
+                    axios.delete(`${this.API_URL}/cate/${id}`)
+                );
                     
-                    await Promise.all(deletePromises);
+                await Promise.all(deletePromises);
                     
                     // Update data first
-                    this.categories = this.categories.filter(c => !this.selectedCategories.has(c.categoryID));
-                    this.selectedCategories.clear();
+                this.categories = this.categories.filter(c => !this.selectedCategories.has(c.categoryID));
+                this.selectedCategories.clear();
                     
                     // Then update UI in a controlled manner
                     requestAnimationFrame(() => {
-                        this.renderTableOnly();
-                        createToast('Selected categories deleted successfully', 'success');
+                this.renderTableOnly();
+                createToast('Selected categories deleted successfully', 'success');
                     });
-                } catch (error) {
-                    console.error('Error deleting categories:', error);
-                    createToast('Failed to delete some categories', 'error');
-                } finally {
-                    hideLoading();
+            } catch (error) {
+                console.error('Error deleting categories:', error);
+                createToast('Failed to delete some categories', 'error');
+            } finally {
+                hideLoading();
                 }
             }
         });
@@ -271,7 +271,7 @@ class CategoryListView extends BaseView {
                 
                 // Update pagination and reinitialize click handlers
                 this.renderPagination();
-                this.clickTable();
+            this.clickTable();
                 
                 // Update showing count
                 const showingElement = document.querySelector('.pagination__showing');
@@ -283,7 +283,7 @@ class CategoryListView extends BaseView {
                 }
             });
         }
-    }
+      }
 
     render() {
         const paginatedCategories = this.getPaginatedCategories();
@@ -323,10 +323,10 @@ class CategoryListView extends BaseView {
                             <img src="${download}" alt="icon" class="button__icon" />
                             <span class="button__text">Export</span>
                         </button>
-                        <button class="product-title__buttons--add">
-                            <img src="${add}" alt="icon" class="button__icon" />
-                            <span class="button__text">Add Category</span>
-                        </button>
+                            <button class="product-title__buttons--add">
+                                <img src="${add}" alt="icon" class="button__icon" />
+                                <span class="button__text">Add Category</span>
+                            </button>
                     </div>
                 </div>
 
