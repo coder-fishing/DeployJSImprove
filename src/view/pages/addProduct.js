@@ -209,12 +209,11 @@ export class addProduct {
         const taxClassSelect = document.querySelector('select[name="taxClass"]');
         const vatAmountInput = document.querySelector('input[name="vatAmount"]');
         
-        // Lấy cả input ảnh trống và đã có ảnh
+        // Get image inputs
         const imageInputEmpty = document.getElementById('imageInputEmpty');
         const imageInputFilled = document.getElementById('imageInputFilled');
         const activeImageInput = imageInputFilled && imageInputFilled.files.length > 0 ? imageInputFilled : imageInputEmpty;
         
-        // Lấy tất cả ảnh preview hiện tại
         const previewImages = document.querySelectorAll('.preview-img');
         
         const categoryDropdown = document.getElementById('dropdownButtonTop');
@@ -234,18 +233,16 @@ export class addProduct {
             vatAmount: vatAmountInput?.value
         });
 
+        // Form validation
         if (!nameInput || !descriptionInput || !priceInput || !stockInput || !categoryDropdown || !skuInput) {
-            console.error('One or more form elements not found', {
-                nameInput: !!nameInput,
-                descriptionInput: !!descriptionInput,
-                priceInput: !!priceInput,
-                stockInput: !!stockInput,
-                categoryDropdown: !!categoryDropdown,
-                skuInput: !!skuInput
-            });
+            console.error('One or more form elements not found');
             createToast('Form elements not found', 'error');
             return;
         }
+
+        // Convert numeric values
+        const discountValue = discountValueInput?.value.trim() ? parseFloat(discountValueInput.value) : 0;
+        const vatAmount = vatAmountInput?.value.trim() ? parseFloat(vatAmountInput.value) : 0;
 
         const formData = {
             name: nameInput.value.trim(),
@@ -259,16 +256,16 @@ export class addProduct {
             status: statusText?.textContent || 'Draft',
             imageUrl: activeImageInput?.files[0] || null,
             previewImages: previewImages,
-            discountType: discountTypeSelect?.value || 'no-discount',
-            discountValue: discountValueInput?.value.trim() || '0',
-            taxClass: taxClassSelect?.value || 'tax-free',
-            vatAmount: vatAmountInput?.value.trim() || '0',
+            discount_type: discountTypeSelect?.value || '',
+            discount_value: discountValue,
+            tax_class: taxClassSelect?.value || '',
+            vat_amount: vatAmount,
             mode: 'create'
         };
 
         console.log('Form data collected successfully', formData);
 
-        // Use validateProductData instead of validateFormData
+        // Validate form data
         const validation = this.controller.validateProductData(formData);
         if (!validation.isValid) {
             createToast(Object.values(validation.errors)[0], 'error');
@@ -281,12 +278,10 @@ export class addProduct {
 
             let imageUrl = null;
             
-            // Xử lý ảnh nếu có ảnh mới được chọn
             if (activeImageInput?.files?.length > 0) {
                 console.log('Uploading new image');
                 imageUrl = await this.controller.handleImageUpload(activeImageInput.files[0]);
             } else {
-                // Lấy ảnh từ preview nếu có
                 const validPreviewImage = Array.from(previewImages).find(img => 
                     img.src && img.src.includes('cloudinary') && img.style.display !== 'none'
                 );
@@ -299,7 +294,6 @@ export class addProduct {
 
             console.log('Image URL:', imageUrl);
 
-            // Create product data object directly instead of using Product constructor
             const productData = {
                 name: formData.name,
                 sku: formData.sku,
@@ -312,6 +306,10 @@ export class addProduct {
                 status: formData.status,
                 barcode: formData.barcode,
                 added: new Date().toISOString(),
+                discount_type: formData.discount_type,
+                discount_value: formData.discount_value,
+                tax_class: formData.tax_class,
+                vat_amount: formData.vat_amount,
                 ImageSrc: {
                     firstImg: imageUrl,
                     secondImg: null,
@@ -320,20 +318,19 @@ export class addProduct {
             };
 
             console.log('Saving product data:', productData);
-                await this.controller.saveProduct(productData);
+            await this.controller.saveProduct(productData);
             createToast('Product added successfully!', 'success');
             
-            // Redirect to homepage with delay to show success message
             setTimeout(() => {
                 window.location.href = "/";
             }, 1000);
-            } catch (error) {
+        } catch (error) {
             console.error('Error:', error);
-                createToast('Failed to add product', 'error');
-            } finally {
-                hideLoading();
+            createToast('Failed to add product', 'error');
+        } finally {
+            hideLoading();
             this.controller.setButtonLoading(submitButton, false);
-            }
+        }
     }
 
     render = async () => {

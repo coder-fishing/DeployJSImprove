@@ -123,6 +123,10 @@ import ProductUIHandler from '../handlers/ui/ProductUIHandler.js';
             // Chỉ lấy ảnh từ Cloudinary
             const validImages = Array.from(images).filter(img => img.src && img.src.includes('cloudinary'));
             
+            // Convert numeric values properly
+            const discountValue = discountValueInput?.value.trim() ? parseFloat(discountValueInput.value) : 0;
+            const vatAmount = vatAmountInput?.value.trim() ? parseFloat(vatAmountInput.value) : 0;
+            
             return {
                 name: nameInput.value.trim(),
                 sku: skuInput.value.trim(),
@@ -135,10 +139,10 @@ import ProductUIHandler from '../handlers/ui/ProductUIHandler.js';
                 barcode: barcodeInput?.value.trim() || '',
                 stock: quantityInput?.value.trim() || '0',
                 quantity: quantityInput?.value.trim() || '0',
-                discountType: discountTypeSelect?.value || 'no-discount',
-                discountValue: discountValueInput?.value.trim() || '0',
-                taxClass: taxClassSelect?.value || 'tax-free',
-                vatAmount: vatAmountInput?.value.trim() || '0',
+                discount_type: discountTypeSelect?.value || '',
+                discount_value: discountValue,
+                tax_class: taxClassSelect?.value || '',
+                vat_amount: vatAmount,
                 ImageSrc: {
                     firstImg: validImages.length > 0 ? validImages[0].src : null,
                     secondImg: validImages.length > 1 ? validImages[1].src : null,
