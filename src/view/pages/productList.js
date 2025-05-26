@@ -8,6 +8,7 @@ import { createToast } from "../../utils/toast.js";
 import { showConfirmDialog } from '../components/confirmDialog.js';
 import { API_URL } from '../../config/apiurl.config.js';
 import { navigate } from "../../utils/navigation";
+import { setupSearchSync } from "../../utils/searchSync.js";
 
 
 class ProductListView {
@@ -48,7 +49,6 @@ class ProductListView {
   }
 
   setupEventListeners() {
-    // Prevent multiple event listener registration
     if (this.eventListenersInitialized) return;
     this.eventListenersInitialized = true;
 
@@ -106,22 +106,31 @@ class ProductListView {
     });
 
     // Setup search with debouncing
-    const searchInput = document.querySelector('.search-bar_input');
+    const searchInput = document.querySelector('.product-list .search-bar_input');
     if (searchInput) {
-      searchInput.addEventListener('input', this.debounceSearch.bind(this));
-    }
-  }
+      setupSearchSync(searchInput, (query) => {
+        if (this.searchTimeout) {
+          clearTimeout(this.searchTimeout);
+        }
+        
+        this.searchTimeout = setTimeout(() => {
+          this.searchQuery = query;
+          this.currentPage = 1;
+          this.renderTableOnly();
+        }, 300);
+      });
 
-  debounceSearch(e) {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
+      // Listen for header search updates
+      window.addEventListener('header-search-update', (event) => {
+        const query = event.detail.query;
+        if (searchInput.value !== query) {
+          searchInput.value = query;
+          this.searchQuery = query;
+          this.currentPage = 1;
+          this.renderTableOnly();
+        }
+      });
     }
-
-    this.searchTimeout = setTimeout(() => {
-      this.searchQuery = e.target.value;
-      this.currentPage = 1;
-      this.renderTableOnly();
-    }, 300);
   }
 
   setupNavigationEvents() {
@@ -392,7 +401,7 @@ class ProductListView {
             </div>
           </div>
           <div class="tag-add-searchbar__search">
-            ${searchBar("Search product. . .")}
+            ${searchBar("Search...")}
           </div>
         </div>
 
