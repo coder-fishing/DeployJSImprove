@@ -1,5 +1,6 @@
 import { caretRight, download, add, caretLeft, checkbox, minus, caretDown } from "./../../assets/icon";
 import CategoryRow from "./../components/categoryRow";  
+import searchBar from "./../components/searchBar";
 import axios from "axios";
 import { setupPaginationEvents } from "../../utils/setupPaginationEvents.js";
 import { showLoading, hideLoading } from "../../utils/loading.js";
@@ -8,6 +9,7 @@ import { showConfirmDialog } from '../components/confirmDialog.js';
 import { API_URL } from '../../config/apiurl.config.js';
 import { navigate } from "../../utils/navigation";
 import BaseView from "../BaseView";
+import { setupSearchSync } from "../../utils/searchSync.js";
 
 class CategoryListView extends BaseView {
     constructor() {
@@ -16,8 +18,10 @@ class CategoryListView extends BaseView {
         this.itemsPerPage = 8;
         this.currentPage = 1;
         this.searchQuery = '';
+        this.searchTimeout = null;
         this.API_URL = API_URL;
         this.selectedCategories = new Set();
+        this.currentFilter = 'all';
         
         this.init();
     }
@@ -105,6 +109,7 @@ class CategoryListView extends BaseView {
         this.addGlobalEventListener('click', this.handleGlobalClick);
         this.setupNavigationEvents();
         this.setupBulkActions();
+        this.setupSearchListener();
     }
 
     setupNavigationEvents() {
@@ -155,6 +160,61 @@ class CategoryListView extends BaseView {
         });
     }
 
+    setupSearchListener() {
+        const searchInput = document.querySelector('.product-list .search-bar_input');
+        if (searchInput) {
+            setupSearchSync(searchInput, (query) => {
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+                
+                this.searchTimeout = setTimeout(() => {
+                    this.searchQuery = query;
+                    this.currentPage = 1;
+                    this.renderTableOnly();
+                }, 300);
+            });
+
+            // Listen for header search updates
+            window.addEventListener('header-search-update', (event) => {
+                const query = event.detail.query;
+                if (searchInput.value !== query) {
+                    searchInput.value = query;
+                    this.searchQuery = query;
+                    this.currentPage = 1;
+                    this.renderTableOnly();
+                }
+            });
+        }
+    }
+
+    filterCategories(categories) {
+        let filteredCategories = categories;
+        
+        // Apply search filter
+        if (this.searchQuery) {
+            const query = this.searchQuery.toLowerCase();
+            filteredCategories = categories.filter(category => {
+                const nameMatch = category.name && 
+                                category.name.toLowerCase().includes(query);
+                const descriptionMatch = category.description && 
+                                       category.description.toLowerCase().includes(query);
+                return nameMatch || descriptionMatch;
+            });
+        }
+        
+        // Apply status filter
+        switch (this.currentFilter) {
+            case 'published':
+                return filteredCategories.filter(category => category.status === 'Published');
+            case 'draft':
+                return filteredCategories.filter(category => category.status === 'Draft');
+            case 'all':
+            default:
+                return filteredCategories;
+        }
+    }
+
     async handleBulkDelete() {
         if (this.selectedCategories.size === 0) return;
 
@@ -190,9 +250,10 @@ class CategoryListView extends BaseView {
     }
 
     getPaginatedCategories() {
+        const filteredCategories = this.filterCategories(this.categories);
         const start = (this.currentPage - 1) * this.itemsPerPage;
         const end = start + this.itemsPerPage;
-        return this.categories.slice(start, end);
+        return filteredCategories.slice(start, end);
     }
 
     renderPagination() {
@@ -251,6 +312,19 @@ class CategoryListView extends BaseView {
             tag.addEventListener('click', () => {
                 tags.forEach(t => t.classList.remove('item-active'));
                 tag.classList.toggle('item-active');
+                
+                const tagText = tag.querySelector('.tag-add-searchbar__tag--item-element').textContent;
+                
+                if (tagText === 'All Categories') {
+                    this.currentFilter = 'all';
+                } else if (tagText === 'Published') {
+                    this.currentFilter = 'published';
+                } else if (tagText === 'Draft') {
+                    this.currentFilter = 'draft';
+                }
+                
+                this.currentPage = 1;
+                this.renderTableOnly();
             });
         });
     }
@@ -323,10 +397,27 @@ class CategoryListView extends BaseView {
                             <img src="${download}" alt="icon" class="button__icon" />
                             <span class="button__text">Export</span>
                         </button>
-                            <button class="product-title__buttons--add">
-                                <img src="${add}" alt="icon" class="button__icon" />
-                                <span class="button__text">Add Category</span>
-                            </button>
+                        <button class="product-title__buttons--add">
+                            <img src="${add}" alt="icon" class="button__icon" />
+                            <span class="button__text">Add Category</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tag-add-searchbar">
+                    <div class="tag-add-searchbar__tag">
+                        <div class="tag-add-searchbar__tag--item item-active">
+                            <p class="tag-add-searchbar__tag--item-element">All Categories</p>
+                        </div>
+                        <div class="tag-add-searchbar__tag--item">
+                            <p class="tag-add-searchbar__tag--item-element">Published</p>
+                        </div>
+                        <div class="tag-add-searchbar__tag--item">
+                            <p class="tag-add-searchbar__tag--item-element">Draft</p>
+                        </div>
+                    </div>
+                    <div class="tag-add-searchbar__search">
+                        ${searchBar("Search...")}
                     </div>
                 </div>
 
@@ -337,7 +428,7 @@ class CategoryListView extends BaseView {
                                 <div class="product-table-header__wrapper three">
                                     <div class="product-table-header__image">
                                         <div class="product-table-header__imageleft">
-                                            <img class="product-table-header__imageleft--first" src="${checkbox}" alt="checkbox"/>
+                                            <img class="product-table-header__imageleft--first" src="${checkbox}" alt="checkbox" />
                                             <img class="product-table-header__imageleft--second" src="${minus}" alt="tick"/>
                                         </div>
                                         <p class="product-table-header__name translate">Category</p>  
