@@ -31,16 +31,16 @@ export class Router {
         };
     }
 
-    loadInitialRoute() {
+    loadInitialRoute() {  
         this.loadRoute(location.pathname);
-    }
+    } 
 
     navigate(path) {
         console.log('Router navigate called with path:', path);
         // Reset loading state before navigation
         forceHideLoading();
         history.pushState({}, '', path);
-        this.loadRoute(path);
+        this.loadRoute(path); 
     }
 
     getRouteParams(routePath, path) {
@@ -76,17 +76,17 @@ export class Router {
                 this.currentView.cleanup();
             }
             
-            const route = this.routes.find((r) => {
-                const routePath = r.path.replace(/:\w+/g, '([^/]+)');
-                const regex = new RegExp(`^${routePath}$`);
-                return regex.test(path);
-            });
+        const route = this.routes.find((r) => {
+            const routePath = r.path.replace(/:\w+/g, '([^/]+)');
+            const regex = new RegExp(`^${routePath}$`);
+            return regex.test(path);
+        });
 
             console.log('Route found:', route ? route.path : 'not found');
-            if (route) {
+        if (route) {
                 // Only render layout if it's not already rendered
                 if (!document.querySelector('.container')) {
-                    document.querySelector("#app").innerHTML = Layout();
+          document.querySelector("#app").innerHTML = Layout();
                 }
 
                 // Get the content container
@@ -119,7 +119,7 @@ export class Router {
                     await view.render();
                     console.log('View rendered for path:', path);
                 }
-            } else {
+        } else {
                 document.querySelector("#app").innerHTML = "<h2>404 Not Found</h2>";
             }
         } catch (error) {

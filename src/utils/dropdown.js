@@ -75,28 +75,28 @@ export const dropdown = (id, btn, content, text = null) => {
                 console.log(`Selected dropdown item: ${selectedValue}, ID: ${selectedId || 'none'}`);
                 
                 // Update the button text
-                dropdownButton.textContent = selectedValue;
-                
+            dropdownButton.textContent = selectedValue;
+            
                 // Store selected ID if available
-                if (selectedId) {
-                    dropdownButton.setAttribute('data-selected-id', selectedId);
+            if (selectedId) {
+                dropdownButton.setAttribute('data-selected-id', selectedId);
                     console.log(`Set data-selected-id attribute to: ${selectedId}`);
                 } else {
                     dropdownButton.removeAttribute('data-selected-id');
-                }
-                
+            }
+
                 // Update status text if available
-                if (statusText) {
-                    statusText.textContent = selectedValue;
+            if (statusText) {
+                statusText.textContent = selectedValue;
                     
                     // Update status class
                     const statusClass = selectedValue.toLowerCase().replace(/\s+/g, '-');
                     statusText.className = `form-section__title-status--label-text ${statusClass}`;
                     console.log(`Updated status text to: ${selectedValue}, class: ${statusClass}`);
-                }
-                
+            }
+
                 // Hide the dropdown after selection
-                dropdownContent.style.display = 'none';
+            dropdownContent.style.display = 'none';
                 
                 // Call existing handler if it exists
                 if (existingHandler && typeof existingHandler === 'function') {
