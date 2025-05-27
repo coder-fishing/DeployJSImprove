@@ -447,7 +447,6 @@ class CategoryListView extends BaseView {
 
                 <div class="tag-add-searchbar">
                     <div class="tag-add-searchbar__tag">
-                       
                     </div>
                     <div class="tag-add-searchbar__search">
                         ${searchBar("Search...")}
