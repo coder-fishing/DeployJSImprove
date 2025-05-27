@@ -27,7 +27,7 @@ class ProductListView {
   
       this.init();
     }
-
+ 
   async fetchProducts() {
     try {
       showLoading();
@@ -42,10 +42,11 @@ class ProductListView {
       hideLoading();
     }
   }
-
+  
   async init() {
     await this.fetchProducts();
     this.setupEventListeners();
+    this.setupNavigationEvents();
   }
 
   setupEventListeners() {
@@ -58,7 +59,7 @@ class ProductListView {
       const addButton = e.target.closest('.product-title__buttons--add');
       if (addButton) {
         navigate('/addproduct');
-      }
+      } 
 
       // Edit button handler
       const editButton = e.target.closest('.product-table__edit');
@@ -139,16 +140,24 @@ class ProductListView {
         const nextBtn = e.target.closest('#nextbtn');
 
         if (prevBtn) {
-            if (this.currentPage > 1) {
-                this.currentPage -= 1;
-                this.renderTableOnly();
+            if (!prevBtn.classList.contains('disabled')) {
+                if (this.currentPage > 1) {
+                    prevBtn.classList.add('clicked');
+                    this.currentPage--;
+                    this.renderTableOnly();
+                    setTimeout(() => prevBtn.classList.remove('clicked'), 200);
+                }
             }
         }
 
         if (nextBtn) {
-            if (this.currentPage < this.maxPage) {
-                this.currentPage += 1;
-                this.renderTableOnly();
+            if (!nextBtn.classList.contains('disabled')) {
+                if (this.currentPage < this.maxPage) {
+                    nextBtn.classList.add('clicked');
+                    this.currentPage++;
+                    this.renderTableOnly();
+                    setTimeout(() => nextBtn.classList.remove('clicked'), 200);
+                }
             }
         }
     });
@@ -264,31 +273,62 @@ class ProductListView {
 
   renderPagination() {
     const pageNumbersContainer = document.getElementById("page-numbers");
+    if (!pageNumbersContainer) return;
+    
     pageNumbersContainer.innerHTML = "";
 
     const filteredProducts = this.filterProducts(this.products);
     this.maxPage = Math.ceil(filteredProducts.length / this.itemsPerPage) || 1;
 
+    // Update prev/next button states
+    const prevBtn = document.querySelector('#prevbtn');
+    const nextBtn = document.querySelector('#nextbtn');
+    
+    if (prevBtn) {
+        if (this.currentPage <= 1) {
+            prevBtn.classList.add('disabled');
+        } else {
+            prevBtn.classList.remove('disabled');
+        }
+    }
+    
+    if (nextBtn) {
+        if (this.currentPage >= this.maxPage) {
+            nextBtn.classList.add('disabled');
+        } else {
+            nextBtn.classList.remove('disabled');
+        }
+    }
+
     let startPage = Math.max(1, this.currentPage - 2);
     let endPage = Math.min(this.maxPage, startPage + 4);
 
+    // Adjust start page if we're near the end
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
     for (let i = startPage; i <= endPage; i++) {
-      const button = document.createElement("button");
-      button.classList.add("page-btn");
-      if (i === this.currentPage) button.classList.add("active");
-      button.textContent = i;
-      button.addEventListener("click", () => {
-        this.currentPage = i;
-        this.render();
-      });
-      pageNumbersContainer.appendChild(button);
+        const button = document.createElement("button");
+        button.classList.add("page-btn");
+        if (i === this.currentPage) {
+            button.classList.add("active");
+        }
+        button.textContent = i;
+        button.addEventListener("click", () => {
+            if (i !== this.currentPage) {
+                this.currentPage = i;
+                this.render();
+            }
+        });
+        pageNumbersContainer.appendChild(button);
     }
 
     if (endPage < this.maxPage) {
-      const dots = document.createElement("div");
-      dots.textContent = "...";
-      dots.classList.add("dots");
-      pageNumbersContainer.appendChild(dots);
+        const dots = document.createElement("div");
+        dots.textContent = "...";
+        dots.classList.add("dots");
+        pageNumbersContainer.appendChild(dots);
     }
   }
 
@@ -464,7 +504,7 @@ class ProductListView {
           </thead>
           <tbody>
             ${paginatedProducts.map(product => ProductRow({ product })).join('')}
-          </tbody>
+          </tbody> 
         </table>
 
         <div class="pagination">
